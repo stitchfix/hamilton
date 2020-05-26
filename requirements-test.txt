@@ -1,0 +1,4 @@
+pytest
+pytest-assume
+pytest-asyncio
+pytest-cov
