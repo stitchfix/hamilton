@@ -59,7 +59,6 @@ setup(
     author_email='model-lifecycle-team@stitchfix.com',
     url='https://github.com/stitchfix/hamilton',
     packages=find_packages('hamilton'),
-    package_dir={'': 'hamilton'},
     package_data={},
     py_modules=[splitext(basename(path))[0] for path in glob('hamilton/*.py')],
     install_requires=load_requirements(),
