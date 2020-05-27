@@ -23,9 +23,9 @@ REQUIREMENTS_FILES = [
 
 def get_version():
     version_dict = {}
-    with open('hamilton/__version__.py') as f:
+    with open('hamilton/version.py') as f:
         exec(f.read(), version_dict)
-    return version_dict['__version__']
+    return '.'.join(map(str, version_dict['VERSION']))
 
 
 VERSION = get_version()
@@ -53,14 +53,14 @@ test_requirements = load_test_requirements()
 setup(
     name='sf-hamilton',  # there's already a hamilton in pypi
     version=VERSION,
-    description='Hamilton, the mirco-framework for creating dataframes.',
+    description='Hamilton, the micro-framework for creating dataframes.',
     long_description=readme,
     author='skrawczyk@stitchfix.com, elijah.benizzy@stitchfix.com',
     author_email='model-lifecycle-team@stitchfix.com',
     url='https://github.com/stitchfix/hamilton',
-    packages=find_packages('hamilton'),
-    package_data={},
-    py_modules=[splitext(basename(path))[0] for path in glob('hamilton/*.py')],
+    packages=find_packages(exclude=['tests']),
+    include_package_data=True,
+    # py_modules=[splitext(basename(path))[0] for path in glob('hamilton/*.py')],
     install_requires=load_requirements(),
     zip_safe=False,
     keywords='hamilton',
