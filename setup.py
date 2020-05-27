@@ -10,10 +10,10 @@ from setuptools import setup, find_packages
 
 # don't fail if there are problems with the readme (happens within circleci)
 try:
-    with open('docs/hamilton.md') as readme_file:
+    with open('README.md') as readme_file:
         readme = readme_file.read()
 except Exception:
-    warnings.warn('README.md/docs not found')
+    warnings.warn('README.md not found')
     readme = None
 
 REQUIREMENTS_FILES = [
