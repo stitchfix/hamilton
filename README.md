@@ -4,8 +4,37 @@ The micro-framework to create dataframes from functions.
 
 Specifically, Hamilton is a framework that allows for delayed executions of functions in a Directed Acyclic Graph (DAG).
 This is meant to solve the problem of creating complex data pipelines. Core to the design of hamilton is a 1:1 mapping of
-key (function name) to implementation. Rather than defining flexible, reusable transformations, Hamilton aims for DAG clarity,
-easy modifications, and documentation.
+key (function name) to implementation. Hamilton forces a certain paradigm with writing functions, and aims for DAG clarity,
+easy modifications, unit testing, and documentation.
+
+# Getting Started
+Here's a quick getting started guide to get you up and running in less than 10 minutes.
+
+## Installation
+TODO:
+
+## Hello World
+TODO:
+
+# License
+Hamilton is released under GNU Affero General Public License version 3.0 (AGPLv3). 
+See [COPYING](COPYING) for a copy of the AGPL3 license or see <https://www.gnu.org/licenses/>.
+This allows many free uses, but does not allow its incorporation (even in part or in translation) into any type of 
+[proprietary software](http://www.gnu.org/licenses/gpl-faq.html#GPLInProprietarySystem) which you distribute, 
+or host on a server (e.g. SaaS), without providing
+
+That said, we're happy to grant commercial licenses of Hamilton. To do so, contact a Stitch Fix contributor and they'll help
+point you in the right direction.
+
+# Contributing
+We take contributions, large and small. We operate via a [Code of Conduct](CODE_OF_CONDUCT.md) and expect anyone 
+contributing to do the same.
+
+From a legal perspective, we require a contributor license agreement to be signed before taking on contributions. See [CLA](CLA) for details. 
+Don't be scared by the legalese, your contribution will always be available and free for use; we just want to cover
+our bases with respect to using AGPLv3.
+
+# Hamilton Basics
 
 ## Hamilton API
 
