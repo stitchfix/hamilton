@@ -1,6 +1,6 @@
 # Guidance on how to contribute
 
-> All contributions to this project will be released under the Affero General Public License v3 (AGPLv3). 
+> All contributions to this project will be released under the Affero General Public License v3 (AGPLv3).
 > By submitting a pull request or filing a bug, issue, or
 > feature request, you are agreeing to comply with this waiver of copyright interest.
 > Details can be found in our [CLA](CLA.md) and [LICENSE](LICENSE).
@@ -29,5 +29,7 @@ Generally speaking, you should fork this repository, make changes in your
 own fork, and then submit a pull request. All new code should have associated
 unit tests that validate implemented features and the presence or lack of defects.
 Additionally, the code should follow any stylistic and architectural guidelines
-prescribed by the project. In the absence of such guidelines, mimic the styles
-and patterns in the existing code-base.
+prescribed by the project. For us here, this means you install a pre-commit hook and use
+the given style files. Basically, you should mimic the styles and patterns in the Hamilton code-base.
+
+In terms of getting setup to develop, we invite you to read our [developer setup guide](developer_setup.md).

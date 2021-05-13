@@ -314,7 +314,7 @@ class does(NodeExpander):
 
 class model(NodeExpander):
     def __init__(self, model_cls: Type[BaseModel], config_param: str, **extra_model_params):
-        """Constructs a model. Takes in a model_cls, whose only cunstruction parameter is a dictionary."""
+        """Constructs a model. Takes in a model_cls, whose only construction parameter is a dictionary."""
         self.model_cls = model_cls
         self.config_param = config_param
         self.extra_model_params = extra_model_params
