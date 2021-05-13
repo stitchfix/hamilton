@@ -120,6 +120,9 @@ That said, we're happy to grant commercial licenses of Hamilton. To do so, conta
 We take contributions, large and small. We operate via a [Code of Conduct](CODE_OF_CONDUCT.md) and expect anyone
 contributing to do the same.
 
+To see how you can contribute, please read our [contributing guidelines](CONTRIBUTING.md) and then our [developer
+setup guide](developer_setup.md).
+
 From a legal perspective, we require a contributor license agreement to be signed before taking on contributions. See [CLA](CLA) for details.
 Don't be scared by the legalese, your contribution will always be available and free for use; we just want to cover
 our bases with respect to using AGPLv3.
