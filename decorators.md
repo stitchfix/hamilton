@@ -6,7 +6,7 @@ business-logic reuse. The decorators we've defined are as follows
 
 ## @parameterized
 Expands a single function into n, each of which corresponds to a function in which the parameter value is replaced by
-that specific value.
+that *specific value*.
 ```python
 import pandas as pd
 from hamilton.function_modifiers import parametrized
@@ -31,7 +31,8 @@ tuple(Output Name, Documentation string) -> value.
 
 ## @parametrized_input
 Expands a single function into n, each of which corresponds to a function in which the parameter value is fed
-the input from a specific column
+the input from a *specific column*. Note this decorator and `@parametrized` are quite similar, except that
+the input here is another DAG node, i.e. column, rather than some specific value.
 ```python
 import pandas as pd
 from hamilton.function_modifiers import parametrized_input
@@ -48,9 +49,9 @@ def date_shifter(one_off_date: pd.Series) -> pd.Series:
     return one_off_date.shift(1)
 
 ```
-We see here that `parameterized_inputs` allows you keep your code DRY by reusing the same function to create multiple
+We see here that `parameterized_input` allows you to keep your code DRY by reusing the same function to create multiple
 distinct outputs. The _parameter_ key word argument has to match one of the arguments in the function. The rest of
-the arguments are pulled from items inside the DAG the DAG. The _assigned_inputs_ key word argument takes in a 
+the arguments are pulled from items inside the DAG. The _assigned_inputs_ key word argument takes in a
 dictionary of input_column -> tuple(Output Name, Documentation string).
 
 Note that this is equivalent to writing the following two function definitions:
@@ -58,7 +59,7 @@ Note that this is equivalent to writing the following two function definitions:
 ```python
 def D_ELECTION_2016_shifted(D_ELECTION_2016: pd.Series) -> pd.Series:
     return D_ELECTION_2016.shift(1)
-    
+
 def SOME_OUTPUT_NAME(SOME_INPUT_NAME: pd.Series) -> pd.Series:
     return SOME_INPUT_NAME.shift(1)
 ```
@@ -97,13 +98,14 @@ def my_func(...) -> pd.DataFrame:
 
 ## @does
 `@does` is a decorator that essentially allows you to run a function over all the input parameters. So you can't pass
-any function to `@does`, it has to take any amount of inputs and process them in the same way.
+any old function to `@does`, instead the function passed has to take any amount of inputs and process them all in the same way.
 ```python
 import pandas as pd
 from hamilton.function_modifiers import does
 import internal_package_with_logic
 
 def sum_series(**series: pd.Series) -> pd.Series:
+    """This function takes any number of inputs and sums them all together."""
     ...
 
 @does(sum_series)
@@ -193,7 +195,7 @@ The following use cases are supported:
 ```
 Note the following:
 - The function cannot have the same name in the same file (or python gets unhappy), so we name it with a
-  __ (dunderscore) as a suffix. The dunderscore is removed before it goes into the function.
+  __ (dunderscore) as a suffix. The dunderscore is removed before it goes into the DAG.
 - There is currently no `@config.otherwise(...)` decorator, so make sure to have `config.when` specify set of
   configuration possibilities.
 Any missing cases will not have that output column (and subsequent downstream nodes may error out if they ask for it).

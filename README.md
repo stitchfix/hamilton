@@ -131,7 +131,7 @@ In general we prescribe the following:
 1. Familiarize yourself with some of the [Hamilton decorators](decorators.md). They will help keep your code DRY.
 2. Start creating Hamilton Functions that represent your work. We suggest grouping them in modules where it makes sense.
 3. Write a simple script so that you can easily run things end to end.
-4. Join the [slack/discord]() community to chat/ask Qs/etc.
+4. Join our [discord](https://discord.gg/HyUrpTQ3xp) community to chat/ask Qs/etc.
 
 
 ## PyCharm Tips
