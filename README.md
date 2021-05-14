@@ -156,3 +156,12 @@ Where the blanks are where you can tab with the cursor and fill things in. See y
 If you are doing a lot of repetitive work, one might consider multiple cursors. Multiple cursors allow you to do things on multiple lines at once. This is great if you are copying and pasting R code that is very similar and need to do a bunch of changes quickly, and search + replace won't cut it for you.
 
 To use it hit `option + mouse click` to create multiple cursors. `Esc` to revert back to a normal mode.
+
+# Contributors
+
+Stefan Krawczyk (@skrawcz)
+Elijah ben Izzy (@elijahbenizzy)
+Danielle Quinn (@danfisher-sf)
+Rachel Insoft (@rinsoft-sf)
+Shelly Jang (@shellyjang)
+Vincent Chu (@vslchusf)
