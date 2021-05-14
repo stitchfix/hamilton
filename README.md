@@ -130,12 +130,14 @@ our bases with respect to using AGPLv3.
 # Prescribed Development Workflow
 In general we prescribe the following:
 
-0. Ensure you understand [Hamilton Basics](basics.md).
-1. Familiarize yourself with some of the [Hamilton decorators](decorators.md). They will help keep your code DRY.
-2. Start creating Hamilton Functions that represent your work. We suggest grouping them in modules where it makes sense.
-3. Write a simple script so that you can easily run things end to end.
-4. Join our [discord](https://discord.gg/HyUrpTQ3xp) community to chat/ask Qs/etc.
+1. Ensure you understand [Hamilton Basics](basics.md).
+2. Familiarize yourself with some of the [Hamilton decorators](decorators.md). They will help keep your code DRY.
+3. Start creating Hamilton Functions that represent your work. We suggest grouping them in modules where it makes sense.
+4. Write a simple script so that you can easily run things end to end.
+5. Join our [discord](https://discord.gg/HyUrpTQ3xp) community to chat/ask Qs/etc.
 
+For the backstory on Hamilton we invite you to watch ~9 minute lightning talk on it that we gave at the apply conference:
+[video](https://www.youtube.com/watch?v=B5Zp_30Knoo), [slides](https://www.slideshare.net/StefanKrawczyk/hamilton-a-micro-framework-for-creating-dataframes).
 
 ## PyCharm Tips
 

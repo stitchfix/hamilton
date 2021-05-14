@@ -136,3 +136,7 @@ would produce. To do so, you just pass in a dictionary of `{'col_name': YOUR_VAL
 execute function.
 
 To visualize the DAG that would be executed, pass the flag `display_graph=True` to execute. It will render an image in a pdf format.
+
+# Backstory
+For the backstory on Hamilton we invite you to watch ~9 minute lightning talk on it that we gave at the apply conference:
+[video](https://www.youtube.com/watch?v=B5Zp_30Knoo), [slides](https://www.slideshare.net/StefanKrawczyk/hamilton-a-micro-framework-for-creating-dataframes).
