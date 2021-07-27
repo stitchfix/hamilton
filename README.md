@@ -108,13 +108,8 @@ You should see the following output:
 Congratulations - you just created your first dataframe with Hamilton!
 
 # License
-Hamilton is released under the GNU Affero General Public License version 3.0 (AGPLv3).
-See [COPYING](COPYING) for a copy of the AGPL3 license or see <https://www.gnu.org/licenses/>.
-This allows many free uses, but does not allow its incorporation (even in part or in translation) into any type of
-[proprietary software](http://www.gnu.org/licenses/gpl-faq.html#GPLInProprietarySystem) which you distribute,
-or host on a server (e.g. SaaS), without providing source code.
-
-That said, we're happy to grant commercial licenses of Hamilton. To do so, contact algorithms-opensource@stitchfix.com.
+Hamilton is released under the [Apache 2.0 license](LICENSE). If you need to get in touch about something,
+contact us at algorithms-opensource@stitchfix.com.
 
 # Contributing
 We take contributions, large and small. We operate via a [Code of Conduct](CODE_OF_CONDUCT.md) and expect anyone
@@ -123,9 +118,6 @@ contributing to do the same.
 To see how you can contribute, please read our [contributing guidelines](CONTRIBUTING.md) and then our [developer
 setup guide](developer_setup.md).
 
-From a legal perspective, we require a contributor license agreement to be signed before taking on contributions. See [CLA](CLA) for details.
-Don't be scared by the legalese, your contribution will always be available and free for use; we just want to cover
-our bases with respect to using AGPLv3.
 
 # Prescribed Development Workflow
 In general we prescribe the following:
