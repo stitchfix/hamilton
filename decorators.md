@@ -152,8 +152,8 @@ def prob_cancel_manual_res() -> pd.Series:
 `GLM` here is not part of the hamilton framework, and instead a user defined model.
 
 Models (optionally) accept a `output_column` parameter -- this is specifically if the name of the function differs
-from the output column that it right to. E.G. if you use the model result as an intermediate object, and manipulate
-it all later. This is necessary because various dependent columns that a model queries
+from the output column that it should represent. E.G. if you use the model result as an intermediate object, and manipulate
+it all later. At Stitch Fix this is necessary because various dependent columns that a model queries
 (e.g. `MULTIPLIER_...` and `OFFSET_...`) are derived from the model's name.
 
 ## @config.when*
