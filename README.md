@@ -20,6 +20,8 @@ To get started, first you need to install hamilton. It is published to pypi unde
 
 While it is installing we encourage you to start on the next section.
 
+Note: the content (i.e. names, function bodies) of our example code snippets are for illustrative purposes only, and don't reflect what we actually do internally.
+
 ## Hamilton in 15 minutes
 Hamilton is a new paradigm when it comes to creating dataframes. Rather than thinking about manipulating
 a central dataframe, you instead think about the column(s) you want to create, and what inputs are required. There
@@ -132,11 +134,13 @@ For the backstory on Hamilton we invite you to watch ~9 minute lightning talk on
 [video](https://www.youtube.com/watch?v=B5Zp_30Knoo), [slides](https://www.slideshare.net/StefanKrawczyk/hamilton-a-micro-framework-for-creating-dataframes).
 
 ## PyCharm Tips
+If you're using Hamilton, it's likely that you'll need to migrate some code. Here are some useful tricks we found
+to speed up that process.
 
 ### Live templates
 Live templates are a cool feature and allow you to type in a name which expands into some code.
 
-E.g. graphfunc ->
+E.g. For example, we wrote one to make it quick to stub out Hamilton functions: typing `graphfunc` would turn into ->
 
 ```python
 def _(_: pd.Series) -> pd.Series:
@@ -144,10 +148,10 @@ def _(_: pd.Series) -> pd.Series:
    return _
 ```
 
-Where the blanks are where you can tab with the cursor and fill things in. See your preferences for setting this up.
+Where the blanks are where you can tab with the cursor and fill things in. See your pycharm preferences for setting this up.
 
 ### Multiple Cursors
-If you are doing a lot of repetitive work, one might consider multiple cursors. Multiple cursors allow you to do things on multiple lines at once. This is great if you are copying and pasting R code that is very similar and need to do a bunch of changes quickly, and search + replace won't cut it for you.
+If you are doing a lot of repetitive work, one might consider multiple cursors. Multiple cursors allow you to do things on multiple lines at once.
 
 To use it hit `option + mouse click` to create multiple cursors. `Esc` to revert back to a normal mode.
 
