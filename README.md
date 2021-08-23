@@ -157,9 +157,9 @@ To use it hit `option + mouse click` to create multiple cursors. `Esc` to revert
 
 # Contributors
 
-Stefan Krawczyk (@skrawcz)
-Elijah ben Izzy (@elijahbenizzy)
-Danielle Quinn (@danfisher-sf)
-Rachel Insoft (@rinsoft-sf)
-Shelly Jang (@shellyjang)
-Vincent Chu (@vslchusf)
+- Stefan Krawczyk (@skrawcz)
+- Elijah ben Izzy (@elijahbenizzy)
+- Danielle Quinn (@danfisher-sf)
+- Rachel Insoft (@rinsoft-sf)
+- Shelly Jang (@shellyjang)
+- Vincent Chu (@vslchusf)
