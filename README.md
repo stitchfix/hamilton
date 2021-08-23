@@ -110,8 +110,8 @@ You should see the following output:
 Congratulations - you just created your first dataframe with Hamilton!
 
 # License
-Hamilton is released under the [Apache 2.0 license](LICENSE). If you need to get in touch about something,
-contact us at algorithms-opensource@stitchfix.com.
+Hamilton is released under the [BSD 3-Clause Clear License](LICENSE). If you need to get in touch about something,
+contact us at algorithms-opensource (at) stitchfix.com.
 
 # Contributing
 We take contributions, large and small. We operate via a [Code of Conduct](CODE_OF_CONDUCT.md) and expect anyone
