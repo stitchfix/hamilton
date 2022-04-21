@@ -1,16 +1,20 @@
 import functools
-import logging
 import inspect
+import logging
 import typing
-from typing import Dict, Callable, Collection, Tuple, Union, Any, Type, List, NamedTuple
-import typing_inspect
+from typing import Any, Callable, Collection, Dict, List, NamedTuple, Tuple, Type, Union
 
 import pandas as pd
+import typing_inspect
 
 from hamilton import node
-from hamilton.function_modifiers_base import NodeCreator, NodeResolver, NodeExpander, sanitize_function_name
+from hamilton.function_modifiers_base import (
+    NodeCreator,
+    NodeExpander,
+    NodeResolver,
+    sanitize_function_name,
+)
 from hamilton.models import BaseModel
-
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +42,9 @@ class parametrized(NodeExpander):
         for node in assigned_output.keys():
             if not isinstance(node, Tuple):
                 raise InvalidDecoratorException(
-                    f'assigned_output key is incorrect: {node}. The parameterized decorator needs a dict of '
-                    '[name, doc string] -> value to function.')
+                    f"assigned_output key is incorrect: {node}. The parameterized decorator needs a dict of "
+                    "[name, doc string] -> value to function."
+                )
 
     def validate(self, fn: Callable):
         """A function is invalid if it does not have the requested parameter.
@@ -50,9 +55,12 @@ class parametrized(NodeExpander):
         signature = inspect.signature(fn)
         if self.parameter not in signature.parameters.keys():
             raise InvalidDecoratorException(
-                f'Annotation is invalid -- no such parameter {self.parameter} in function {fn}')
+                f"Annotation is invalid -- no such parameter {self.parameter} in function {fn}"
+            )
 
-    def expand_node(self, node_: node.Node, config: Dict[str, Any], fn: Callable) -> Collection[node.Node]:
+    def expand_node(
+        self, node_: node.Node, config: Dict[str, Any], fn: Callable
+    ) -> Collection[node.Node]:
         """For each parameter value, loop through, partially curry the function, and output a node."""
         input_types = node_.input_types
         nodes = []
@@ -63,12 +71,17 @@ class parametrized(NodeExpander):
                     node_.type,
                     node_doc,
                     functools.partial(node_.callable, **{self.parameter: value}),
-                    input_types={key: value for key, (value, _) in input_types.items() if key != self.parameter}))
+                    input_types={
+                        key: value
+                        for key, (value, _) in input_types.items()
+                        if key != self.parameter
+                    },
+                )
+            )
         return nodes
 
 
 class parametrized_input(NodeExpander):
-
     def __init__(self, parameter: str, variable_inputs: Dict[str, Tuple[str, str]]):
         """Constructor for a modifier that expands a single function into n, each of which
         corresponds to the specified parameter replaced by a *specific input column*.
@@ -85,22 +98,29 @@ class parametrized_input(NodeExpander):
         :param parameter: Parameter to expand on.
         :param variable_inputs: A map of tuple of [parameter names, documentation] to values
         """
-        logger.warning('`parameterized_input` (singular) is deprecated. It will be removed in a 2.0.0 release. '
-                       'Please migrate to using `parameterized_inputs` (plural).')
+        logger.warning(
+            "`parameterized_input` (singular) is deprecated. It will be removed in a 2.0.0 release. "
+            "Please migrate to using `parameterized_inputs` (plural)."
+        )
         self.parameter = parameter
         self.assigned_output = variable_inputs
         for value in variable_inputs.values():
             if not isinstance(value, Tuple):
                 raise InvalidDecoratorException(
-                    f'assigned_output key is incorrect: {node}. The parameterized decorator needs a dict of '
-                    'input column -> [name, description] to function.')
+                    f"assigned_output key is incorrect: {node}. The parameterized decorator needs a dict of "
+                    "input column -> [name, description] to function."
+                )
 
-    def expand_node(self, node_: node.Node, config: Dict[str, Any], fn: Callable) -> Collection[node.Node]:
+    def expand_node(
+        self, node_: node.Node, config: Dict[str, Any], fn: Callable
+    ) -> Collection[node.Node]:
         nodes = []
         input_types = node_.input_types
         for input_column, (node_name, node_description) in self.assigned_output.items():
             specific_inputs = {key: value for key, (value, _) in input_types.items()}
-            specific_inputs[input_column] = specific_inputs.pop(self.parameter)  # replace the name with the new function name so we get the right dependencies
+            specific_inputs[input_column] = specific_inputs.pop(
+                self.parameter
+            )  # replace the name with the new function name so we get the right dependencies
 
             def new_fn(*args, input_column=input_column, **kwargs):
                 """This function rewrites what is passed in kwargs to the right kwarg for the function."""
@@ -110,11 +130,9 @@ class parametrized_input(NodeExpander):
 
             nodes.append(
                 node.Node(
-                    node_name,
-                    node_.type,
-                    node_description,
-                    new_fn,
-                    input_types=specific_inputs))
+                    node_name, node_.type, node_description, new_fn, input_types=specific_inputs
+                )
+            )
         return nodes
 
     def validate(self, fn: Callable):
@@ -126,11 +144,12 @@ class parametrized_input(NodeExpander):
         signature = inspect.signature(fn)
         if self.parameter not in signature.parameters.keys():
             raise InvalidDecoratorException(
-                f'Annotation is invalid -- no such parameter {self.parameter} in function {fn}')
+                f"Annotation is invalid -- no such parameter {self.parameter} in function {fn}"
+            )
 
 
 class parameterized_inputs(NodeExpander):
-    RESERVED_KWARG = 'output_name'
+    RESERVED_KWARG = "output_name"
 
     def __init__(self, **parameterization: Dict[str, Dict[str, str]]):
         """Constructor for a modifier that expands a single function into n, each of which corresponds to replacing
@@ -152,12 +171,16 @@ class parameterized_inputs(NodeExpander):
         """
         self.parametrization = parameterization
         if not parameterization:
-            raise ValueError(f'Cannot pass empty/None dictionary to parameterized_inputs')
+            raise ValueError(f"Cannot pass empty/None dictionary to parameterized_inputs")
         for output, mappings in parameterization.items():
             if not mappings:
-                raise ValueError(f'Error, {output} has a none/empty dictionary mapping. Please fill it.')
+                raise ValueError(
+                    f"Error, {output} has a none/empty dictionary mapping. Please fill it."
+                )
 
-    def expand_node(self, node_: node.Node, config: Dict[str, Any], fn: Callable) -> Collection[node.Node]:
+    def expand_node(
+        self, node_: node.Node, config: Dict[str, Any], fn: Callable
+    ) -> Collection[node.Node]:
         nodes = []
         input_types = node_.input_types
         for output_name, mapping in self.parametrization.items():
@@ -166,7 +189,9 @@ class parameterized_inputs(NodeExpander):
             node_description = self.format_doc_string(node_.documentation, output_name, **mapping)
             specific_inputs = {key: value for key, (value, _) in input_types.items()}
             for func_param, replacement_param in mapping.items():
-                logger.info(f'For function {node_.name}: mapping {replacement_param} to {func_param}.')
+                logger.info(
+                    f"For function {node_.name}: mapping {replacement_param} to {func_param}."
+                )
                 # replace the name with the new function name so we get the right dependencies
                 specific_inputs[replacement_param] = specific_inputs.pop(func_param)
 
@@ -179,11 +204,9 @@ class parameterized_inputs(NodeExpander):
 
             nodes.append(
                 node.Node(
-                    node_name,
-                    node_.type,
-                    node_description,
-                    new_fn,
-                    input_types=specific_inputs))
+                    node_name, node_.type, node_description, new_fn, input_types=specific_inputs
+                )
+            )
         return nodes
 
     def format_doc_string(self, doc: str, output_name: str, **params: Dict[str, str]) -> str:
@@ -209,13 +232,16 @@ class parameterized_inputs(NodeExpander):
             for output_name, mappings in self.parametrization.items():
                 self.format_doc_string(fn.__doc__, output_name, **mappings)
         except KeyError as e:
-            raise InvalidDecoratorException(f'Function docstring templating is incorrect. '
-                                            f'Please fix up the docstring {fn.__module__}.{fn.__name__}.') from e
+            raise InvalidDecoratorException(
+                f"Function docstring templating is incorrect. "
+                f"Please fix up the docstring {fn.__module__}.{fn.__name__}."
+            ) from e
 
         if self.RESERVED_KWARG in func_param_name_set:
             raise InvalidDecoratorException(
-                f'Error function {fn.__module__}.{fn.__name__} cannot have `{self.RESERVED_KWARG}` '
-                f'as a parameter it is reserved.')
+                f"Error function {fn.__module__}.{fn.__name__} cannot have `{self.RESERVED_KWARG}` "
+                f"as a parameter it is reserved."
+            )
         missing_params = set()
         for output_name, mappings in self.parametrization.items():
             for func_name, replacement_name in mappings.items():
@@ -223,12 +249,12 @@ class parameterized_inputs(NodeExpander):
                     missing_params.add(func_name)
         if missing_params:
             raise InvalidDecoratorException(
-                f'Annotation is invalid -- No such parameter(s) {missing_params} in function '
-                f'{fn.__module__}.{fn.__name__}.')
+                f"Annotation is invalid -- No such parameter(s) {missing_params} in function "
+                f"{fn.__module__}.{fn.__name__}."
+            )
 
 
 class extract_columns(NodeExpander):
-
     def __init__(self, *columns: Union[Tuple[str, str], str], fill_with: Any = None):
         """Constructor for a modifier that expands a single function into the following nodes:
         - n functions, each of which take in the original dataframe and output a specific column
@@ -239,9 +265,13 @@ class extract_columns(NodeExpander):
         Or do you want to error out? Leave empty/None to error out, set fill_value to dynamically create a column.
         """
         if not columns:
-            raise InvalidDecoratorException('Error empty arguments passed to extract_columns decorator.')
+            raise InvalidDecoratorException(
+                "Error empty arguments passed to extract_columns decorator."
+            )
         elif isinstance(columns[0], list):
-            raise InvalidDecoratorException('Error list passed in. Please `*` in front of it to expand it.')
+            raise InvalidDecoratorException(
+                "Error list passed in. Please `*` in front of it to expand it."
+            )
         self.columns = columns
         self.fill_with = fill_with
 
@@ -254,9 +284,12 @@ class extract_columns(NodeExpander):
         output_type = inspect.signature(fn).return_annotation
         if not issubclass(output_type, pd.DataFrame):
             raise InvalidDecoratorException(
-                f'For extracting columns, output type must be pandas dataframe, not: {output_type}')
+                f"For extracting columns, output type must be pandas dataframe, not: {output_type}"
+            )
 
-    def expand_node(self, node_: node.Node, config: Dict[str, Any], fn: Callable) -> Collection[node.Node]:
+    def expand_node(
+        self, node_: node.Node, config: Dict[str, Any], fn: Callable
+    ) -> Collection[node.Node]:
         """For each column to extract, output a node that extracts that column. Also, output the original dataframe
         generator.
 
@@ -277,22 +310,35 @@ class extract_columns(NodeExpander):
                         df_generated[col] = self.fill_with
             return df_generated
 
-        output_nodes = [node.Node(node_.name, typ=pd.DataFrame, doc_string=base_doc, callabl=df_generator)]
+        output_nodes = [
+            node.Node(node_.name, typ=pd.DataFrame, doc_string=base_doc, callabl=df_generator)
+        ]
 
         for column in self.columns:
             doc_string = base_doc  # default doc string of base function.
             if isinstance(column, Tuple):  # Expand tuple into constituents
                 column, doc_string = column
 
-            def extractor_fn(column_to_extract: str = column, **kwargs) -> pd.Series:  # avoiding problems with closures
+            def extractor_fn(
+                column_to_extract: str = column, **kwargs
+            ) -> pd.Series:  # avoiding problems with closures
                 df = kwargs[node_.name]
                 if column_to_extract not in df:
-                    raise InvalidDecoratorException(f'No such column: {column_to_extract} produced by {node_.name}. '
-                                                    f'It only produced {str(df.columns)}')
+                    raise InvalidDecoratorException(
+                        f"No such column: {column_to_extract} produced by {node_.name}. "
+                        f"It only produced {str(df.columns)}"
+                    )
                 return kwargs[node_.name][column_to_extract]
 
             output_nodes.append(
-                node.Node(column, pd.Series, doc_string, extractor_fn, input_types={node_.name: pd.DataFrame}))
+                node.Node(
+                    column,
+                    pd.Series,
+                    doc_string,
+                    extractor_fn,
+                    input_types={node_.name: pd.DataFrame},
+                )
+            )
         return output_nodes
 
 
@@ -309,20 +355,25 @@ class extract_fields(NodeExpander):
         Or do you want to error out? Leave empty/None to error out, set fill_value to dynamically create a field value.
         """
         if not fields:
-            raise InvalidDecoratorException('Error an empty dict, or no dict, passed to extract_fields decorator.')
+            raise InvalidDecoratorException(
+                "Error an empty dict, or no dict, passed to extract_fields decorator."
+            )
         elif not isinstance(fields, dict):
-            raise InvalidDecoratorException(f'Error, please pass in a dict, not {type(fields)}')
+            raise InvalidDecoratorException(f"Error, please pass in a dict, not {type(fields)}")
         else:
             errors = []
             for field, field_type in fields.items():
                 if not isinstance(field, str):
-                    errors.append(f'{field} is not a string. All keys must be strings.')
+                    errors.append(f"{field} is not a string. All keys must be strings.")
                 if not isinstance(field_type, type):
-                    errors.append(f'{field} does not declare a type. Instead it passes {field_type}.')
+                    errors.append(
+                        f"{field} does not declare a type. Instead it passes {field_type}."
+                    )
 
             if errors:
-                raise InvalidDecoratorException(f'Error, found these {errors}. '
-                                                f'Please pass in a dict of string to types. ')
+                raise InvalidDecoratorException(
+                    f"Error, found these {errors}. " f"Please pass in a dict of string to types. "
+                )
         self.fields = fields
         self.fill_with = fill_with
 
@@ -335,18 +386,24 @@ class extract_fields(NodeExpander):
         output_type = inspect.signature(fn).return_annotation
         if typing_inspect.is_generic_type(output_type):
             base = typing_inspect.get_origin(output_type)
-            if base == dict or base == typing.Dict:  # different python versions return different things 3.7+ vs 3.6.
+            if (
+                base == dict or base == typing.Dict
+            ):  # different python versions return different things 3.7+ vs 3.6.
                 pass
             else:
                 raise InvalidDecoratorException(
-                    f'For extracting fields, output type must be a dict or typing.Dict, not: {output_type}')
+                    f"For extracting fields, output type must be a dict or typing.Dict, not: {output_type}"
+                )
         elif output_type == dict:
             pass
         else:
             raise InvalidDecoratorException(
-                f'For extracting fields, output type must be a dict or typing.Dict, not: {output_type}')
+                f"For extracting fields, output type must be a dict or typing.Dict, not: {output_type}"
+            )
 
-    def expand_node(self, node_: node.Node, config: Dict[str, Any], fn: Callable) -> Collection[node.Node]:
+    def expand_node(
+        self, node_: node.Node, config: Dict[str, Any], fn: Callable
+    ) -> Collection[node.Node]:
         """For each field to extract, output a node that extracts that field. Also, output the original TypedDict
         generator.
 
@@ -368,20 +425,29 @@ class extract_fields(NodeExpander):
                         dict_generated[field] = self.fill_with
             return dict_generated
 
-        output_nodes = [node.Node(node_.name, typ=dict, doc_string=base_doc, callabl=dict_generator)]
+        output_nodes = [
+            node.Node(node_.name, typ=dict, doc_string=base_doc, callabl=dict_generator)
+        ]
 
         for field, field_type in self.fields.items():
             doc_string = base_doc  # default doc string of base function.
 
-            def extractor_fn(field_to_extract: str = field, **kwargs) -> field_type:  # avoiding problems with closures
+            def extractor_fn(
+                field_to_extract: str = field, **kwargs
+            ) -> field_type:  # avoiding problems with closures
                 dt = kwargs[node_.name]
                 if field_to_extract not in dt:
-                    raise InvalidDecoratorException(f'No such field: {field_to_extract} produced by {node_.name}. '
-                                                    f'It only produced {list(dt.keys())}')
+                    raise InvalidDecoratorException(
+                        f"No such field: {field_to_extract} produced by {node_.name}. "
+                        f"It only produced {list(dt.keys())}"
+                    )
                 return kwargs[node_.name][field_to_extract]
 
             output_nodes.append(
-                node.Node(field, field_type, doc_string, extractor_fn, input_types={node_.name: dict}))
+                node.Node(
+                    field, field_type, doc_string, extractor_fn, input_types={node_.name: dict}
+                )
+            )
         return output_nodes
 
 
@@ -400,10 +466,14 @@ def ensure_function_empty(fn: Callable):
     Ensures that a function is empty. This is strict definition -- the function must have only one line (and
     possibly a docstring), and that line must say "pass".
     """
-    if fn.__code__.co_code not in {_empty_function.__code__.co_code,
-                                   _empty_function_with_docstring.__code__.co_code}:
-        raise InvalidDecoratorException(f'Function: {fn.__name__} is not empty. Must have only one line that '
-                                        f'consists of "pass"')
+    if fn.__code__.co_code not in {
+        _empty_function.__code__.co_code,
+        _empty_function_with_docstring.__code__.co_code,
+    }:
+        raise InvalidDecoratorException(
+            f"Function: {fn.__name__} is not empty. Must have only one line that "
+            f'consists of "pass"'
+        )
 
 
 class does(NodeCreator):
@@ -422,7 +492,9 @@ class does(NodeCreator):
         annotation_fn = inspect.signature(fn).return_annotation
         annotation_todo = inspect.signature(todo).return_annotation
         if not issubclass(annotation_todo, annotation_fn):
-            raise InvalidDecoratorException(f'Output types: {annotation_fn} and {annotation_todo} are not compatible')
+            raise InvalidDecoratorException(
+                f"Output types: {annotation_fn} and {annotation_todo} are not compatible"
+            )
 
     @staticmethod
     def ensure_function_kwarg_only(fn: Callable):
@@ -431,12 +503,16 @@ class does(NodeCreator):
         """
         parameters = inspect.signature(fn).parameters
         if len(parameters) > 1:
-            raise InvalidDecoratorException('Too many parameters -- for now @does can only use **kwarg functions. '
-                                            f'Found params: {parameters}')
-        (_, parameter), = parameters.items()
+            raise InvalidDecoratorException(
+                "Too many parameters -- for now @does can only use **kwarg functions. "
+                f"Found params: {parameters}"
+            )
+        ((_, parameter),) = parameters.items()
         if not parameter.kind == inspect.Parameter.VAR_KEYWORD:
-            raise InvalidDecoratorException(f'Must have only one parameter, and that parameter must be a **kwargs '
-                                            f'parameter. Instead, found: {parameter}')
+            raise InvalidDecoratorException(
+                f"Must have only one parameter, and that parameter must be a **kwargs "
+                f"parameter. Instead, found: {parameter}"
+            )
 
     def validate(self, fn: Callable):
         """
@@ -461,9 +537,10 @@ class does(NodeCreator):
         return node.Node(
             fn.__name__,
             typ=fn_signature.return_annotation,
-            doc_string=fn.__doc__ if fn.__doc__ is not None else '',
+            doc_string=fn.__doc__ if fn.__doc__ is not None else "",
             callabl=self.replacing_function,
-            input_types={key: value.annotation for key, value in fn_signature.parameters.items()})
+            input_types={key: value.annotation for key, value in fn_signature.parameters.items()},
+        )
 
 
 class dynamic_transform(NodeCreator):
@@ -485,27 +562,39 @@ class dynamic_transform(NodeCreator):
         ensure_function_empty(fn)  # it has to look exactly
         signature = inspect.signature(fn)
         if not issubclass(signature.return_annotation, pd.Series):
-            raise InvalidDecoratorException('Models must declare their return type as a pandas Series')
+            raise InvalidDecoratorException(
+                "Models must declare their return type as a pandas Series"
+            )
         if len(signature.parameters) > 0:
-            raise InvalidDecoratorException('Models must have no parameters -- all are passed in through the config')
+            raise InvalidDecoratorException(
+                "Models must have no parameters -- all are passed in through the config"
+            )
 
     def generate_node(self, fn: Callable, config: Dict[str, Any] = None) -> node.Node:
         if self.config_param not in config:
-            raise InvalidDecoratorException(f'Configuration has no parameter: {self.config_param}. Did you define it? If so did you spell it right?')
+            raise InvalidDecoratorException(
+                f"Configuration has no parameter: {self.config_param}. Did you define it? If so did you spell it right?"
+            )
         fn_name = fn.__name__
-        transform = self.transform_cls(config[self.config_param], fn_name, **self.extra_transform_params)
+        transform = self.transform_cls(
+            config[self.config_param], fn_name, **self.extra_transform_params
+        )
         return node.Node(
             name=fn_name,
             typ=inspect.signature(fn).return_annotation,
             doc_string=fn.__doc__,
             callabl=transform.compute,
-            input_types={dep: pd.Series for dep in transform.get_dependents()})
+            input_types={dep: pd.Series for dep in transform.get_dependents()},
+        )
 
 
 class model(dynamic_transform):
     """Model, same as a dynamic transform"""
+
     def __init__(self, model_cls, config_param: str, **extra_model_params):
-        super(model, self).__init__(transform_cls=model_cls, config_param=config_param, **extra_model_params)
+        super(model, self).__init__(
+            transform_cls=model_cls, config_param=config_param, **extra_model_params
+        )
 
 
 class config(NodeResolver):
@@ -531,11 +620,13 @@ class config(NodeResolver):
         return fn
 
     def validate(self, fn):
-        if fn.__name__.endswith('__'):
-            raise InvalidDecoratorException('Config will always use the portion of the function name before the last __. For example, signups__v2 will map to signups, whereas')
+        if fn.__name__.endswith("__"):
+            raise InvalidDecoratorException(
+                "Config will always use the portion of the function name before the last __. For example, signups__v2 will map to signups, whereas"
+            )
 
     @staticmethod
-    def when(name=None, **key_value_pairs) -> 'config':
+    def when(name=None, **key_value_pairs) -> "config":
         """Yields a decorator that resolves the function if all keys in the config are equal to the corresponding value
 
         :param key_value_pairs: Keys and corresponding values to look up in the config
@@ -548,7 +639,7 @@ class config(NodeResolver):
         return config(resolves, target_name=name)
 
     @staticmethod
-    def when_not(name=None, **key_value_pairs: Any) -> 'config':
+    def when_not(name=None, **key_value_pairs: Any) -> "config":
         """Yields a decorator that resolves the function if none keys in the config are equal to the corresponding value
 
         :param key_value_pairs: Keys and corresponding values to look up in the config
@@ -561,7 +652,7 @@ class config(NodeResolver):
         return config(resolves, target_name=name)
 
     @staticmethod
-    def when_in(name=None, **key_value_group_pairs: Collection[Any]) -> 'config':
+    def when_in(name=None, **key_value_group_pairs: Collection[Any]) -> "config":
         """Yields a decorator that resolves the function if all of the keys are equal to one of items in the list of values.
 
         :param key_value_group_pairs: pairs of key-value mappings where the value is a list of possible values
@@ -569,12 +660,14 @@ class config(NodeResolver):
         """
 
         def resolves(configuration: Dict[str, Any]) -> bool:
-            return all(configuration.get(key) in value for key, value in key_value_group_pairs.items())
+            return all(
+                configuration.get(key) in value for key, value in key_value_group_pairs.items()
+            )
 
         return config(resolves, target_name=name)
 
     @staticmethod
-    def when_not_in(**key_value_group_pairs: Collection[Any]) -> 'config':
+    def when_not_in(**key_value_group_pairs: Collection[Any]) -> "config":
         """Yields a decorator that resolves the function only if none of the keys are in the list of values.
 
         :param key_value_group_pairs: pairs of key-value mappings where the value is a list of possible values
@@ -594,6 +687,8 @@ class config(NodeResolver):
         """
 
         def resolves(configuration: Dict[str, Any]) -> bool:
-            return all(configuration.get(key) not in value for key, value in key_value_group_pairs.items())
+            return all(
+                configuration.get(key) not in value for key, value in key_value_group_pairs.items()
+            )
 
         return config(resolves)

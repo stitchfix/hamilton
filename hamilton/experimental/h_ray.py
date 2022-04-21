@@ -4,8 +4,7 @@ import typing
 import ray
 from ray import workflow
 
-from hamilton import base
-from hamilton import node
+from hamilton import base, node
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +37,9 @@ class RayGraphAdapter(base.HamiltonGraphAdapter, base.ResultMixin):
         """
         self.result_builder = result_builder
         if not self.result_builder:
-            raise ValueError('Error: ResultMixin object required. Please pass one in for `result_builder`.')
+            raise ValueError(
+                "Error: ResultMixin object required. Please pass one in for `result_builder`."
+            )
 
     @staticmethod
     def check_input_type(node_type: typing.Type, input_value: typing.Any) -> bool:
@@ -68,7 +69,7 @@ class RayGraphAdapter(base.HamiltonGraphAdapter, base.ResultMixin):
         """
         if logger.isEnabledFor(logging.DEBUG):
             for k, v in outputs.items():
-                logger.debug(f'Got output {k}, with type [{type(v)}].')
+                logger.debug(f"Got output {k}, with type [{type(v)}].")
         # need to wrap our result builder in a remote call and then pass in what we want to build from.
         remote_combine = ray.remote(self.result_builder.build_result).remote(**outputs)
         result = ray.get(remote_combine)  # this materializes the object locally
@@ -117,7 +118,9 @@ class RayWorkflowGraphAdapter(base.HamiltonGraphAdapter, base.ResultMixin):
         self.result_builder = result_builder
         self.workflow_id = workflow_id
         if not self.result_builder:
-            raise ValueError('Error: ResultMixin object required. Please pass one in for `result_builder`.')
+            raise ValueError(
+                "Error: ResultMixin object required. Please pass one in for `result_builder`."
+            )
 
     @staticmethod
     def check_input_type(node_type: typing.Type, input_value: typing.Any) -> bool:
@@ -147,8 +150,10 @@ class RayWorkflowGraphAdapter(base.HamiltonGraphAdapter, base.ResultMixin):
         """
         if logger.isEnabledFor(logging.DEBUG):
             for k, v in outputs.items():
-                logger.debug(f'Got output {k}, with type [{type(v)}].')
+                logger.debug(f"Got output {k}, with type [{type(v)}].")
         # need to wrap our result builder in a remote call and then pass in what we want to build from.
         remote_combine = workflow.step(self.result_builder.build_result).step(**outputs)
-        result = remote_combine.run(workflow_id=self.workflow_id)  # this materializes the object locally
+        result = remote_combine.run(
+            workflow_id=self.workflow_id
+        )  # this materializes the object locally
         return result
