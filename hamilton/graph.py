@@ -309,7 +309,7 @@ class FunctionGraph(object):
 
         dot = create_graphviz_graph(nodes, user_nodes, 'Dependency Graph')
         kwargs = {'view': True}
-        if kwargs and isinstance(render_kwargs, dict):
+        if isinstance(render_kwargs, dict):
             kwargs.update(render_kwargs)
         dot.render(output_file_path, **kwargs)
 
