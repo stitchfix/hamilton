@@ -3,14 +3,13 @@ import logging
 import inspect
 import typing
 from typing import Dict, Callable, Collection, Tuple, Union, Any, Type, List, NamedTuple
-import typing_inspect
 
 import pandas as pd
+import typing_inspect
 
 from hamilton import node
-from hamilton.function_modifiers_base import NodeCreator, NodeResolver, NodeExpander, sanitize_function_name
+from hamilton.function_modifiers_base import NodeCreator, NodeResolver, NodeExpander, sanitize_function_name, NodeDecorator
 from hamilton.models import BaseModel
-
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +22,16 @@ as annotations. They are classes to hold state and subclass common functionality
 
 class InvalidDecoratorException(Exception):
     pass
+
+
+def get_default_tags(fn: Callable) -> Dict[str, str]:
+    """Function that encapsulates default tags on a function.
+
+    :param fn: the function we want to create default tags for.
+    :return: a dictionary with str -> str values representing the default tags.
+    """
+    module_name = inspect.getmodule(fn).__name__
+    return {'module': module_name}
 
 
 class parametrized(NodeExpander):
@@ -63,7 +72,8 @@ class parametrized(NodeExpander):
                     node_.type,
                     node_doc,
                     functools.partial(node_.callable, **{self.parameter: value}),
-                    input_types={key: value for key, (value, _) in input_types.items() if key != self.parameter}))
+                    input_types={key: value for key, (value, _) in input_types.items() if key != self.parameter},
+                    tags=node_.tags.copy()))
         return nodes
 
 
@@ -114,7 +124,8 @@ class parametrized_input(NodeExpander):
                     node_.type,
                     node_description,
                     new_fn,
-                    input_types=specific_inputs))
+                    input_types=specific_inputs,
+                    tags=node_.tags.copy()))
         return nodes
 
     def validate(self, fn: Callable):
@@ -183,7 +194,8 @@ class parameterized_inputs(NodeExpander):
                     node_.type,
                     node_description,
                     new_fn,
-                    input_types=specific_inputs))
+                    input_types=specific_inputs,
+                    tags=node_.tags.copy()))
         return nodes
 
     def format_doc_string(self, doc: str, output_name: str, **params: Dict[str, str]) -> str:
@@ -277,7 +289,11 @@ class extract_columns(NodeExpander):
                         df_generated[col] = self.fill_with
             return df_generated
 
-        output_nodes = [node.Node(node_.name, typ=pd.DataFrame, doc_string=base_doc, callabl=df_generator)]
+        output_nodes = [node.Node(node_.name,
+                                  typ=pd.DataFrame,
+                                  doc_string=base_doc,
+                                  callabl=df_generator,
+                                  tags=node_.tags.copy())]
 
         for column in self.columns:
             doc_string = base_doc  # default doc string of base function.
@@ -292,7 +308,8 @@ class extract_columns(NodeExpander):
                 return kwargs[node_.name][column_to_extract]
 
             output_nodes.append(
-                node.Node(column, pd.Series, doc_string, extractor_fn, input_types={node_.name: pd.DataFrame}))
+                node.Node(column, pd.Series, doc_string, extractor_fn,
+                          input_types={node_.name: pd.DataFrame}, tags=node_.tags.copy()))
         return output_nodes
 
 
@@ -368,7 +385,7 @@ class extract_fields(NodeExpander):
                         dict_generated[field] = self.fill_with
             return dict_generated
 
-        output_nodes = [node.Node(node_.name, typ=dict, doc_string=base_doc, callabl=dict_generator)]
+        output_nodes = [node.Node(node_.name, typ=dict, doc_string=base_doc, callabl=dict_generator, tags=node_.tags.copy())]
 
         for field, field_type in self.fields.items():
             doc_string = base_doc  # default doc string of base function.
@@ -381,7 +398,7 @@ class extract_fields(NodeExpander):
                 return kwargs[node_.name][field_to_extract]
 
             output_nodes.append(
-                node.Node(field, field_type, doc_string, extractor_fn, input_types={node_.name: dict}))
+                node.Node(field, field_type, doc_string, extractor_fn, input_types={node_.name: dict}, tags=node_.tags.copy()))
         return output_nodes
 
 
@@ -453,8 +470,8 @@ class does(NodeCreator):
     def generate_node(self, fn: Callable, config) -> node.Node:
         """
         Returns one node which has the replaced functionality
-        :param config:
         :param fn:
+        :param config:
         :return:
         """
         fn_signature = inspect.signature(fn)
@@ -463,7 +480,8 @@ class does(NodeCreator):
             typ=fn_signature.return_annotation,
             doc_string=fn.__doc__ if fn.__doc__ is not None else '',
             callabl=self.replacing_function,
-            input_types={key: value.annotation for key, value in fn_signature.parameters.items()})
+            input_types={key: value.annotation for key, value in fn_signature.parameters.items()},
+            tags=get_default_tags(fn))
 
 
 class dynamic_transform(NodeCreator):
@@ -499,11 +517,13 @@ class dynamic_transform(NodeCreator):
             typ=inspect.signature(fn).return_annotation,
             doc_string=fn.__doc__,
             callabl=transform.compute,
-            input_types={dep: pd.Series for dep in transform.get_dependents()})
+            input_types={dep: pd.Series for dep in transform.get_dependents()},
+            tags=get_default_tags(fn))
 
 
 class model(dynamic_transform):
     """Model, same as a dynamic transform"""
+
     def __init__(self, model_cls, config_param: str, **extra_model_params):
         super(model, self).__init__(transform_cls=model_cls, config_param=config_param, **extra_model_params)
 
@@ -597,3 +617,121 @@ class config(NodeResolver):
             return all(configuration.get(key) not in value for key, value in key_value_group_pairs.items())
 
         return config(resolves)
+
+
+class tag(NodeDecorator):
+    """Decorator class that adds a tag to a node. Tags take the form of key/value pairings.
+    Tags can have dots to specify namespaces (keys with dots), but this is usually reserved for special cases
+    (E.G. subdecorators) that utilize them. Usually one will pass in tags as kwargs, so we expect tags to
+    be un-namespaced in most uses.
+
+    That is using:
+    > @tag(my_tag='tag_value')
+    > def my_function(...) -> ...:
+    is un-namespaced because you cannot put a `.` in the keyword part (the part before the '=').
+
+    But using:
+    > @tag(**{'my.tag': 'tag_value'})
+    > def my_function(...) -> ...:
+    allows you to add dots that allow you to namespace your tags.
+
+    Currently, tag values are restricted to allowing strings only, although we may consider changing the in the future
+    (E.G. thinking of lists).
+
+    Hamilton also reserves the right to change the following:
+    * adding purely positional arguments
+    * not allowing users to use a certain set of top-level prefixes (E.G. any tag where the top level is one of the
+      values in RESERVED_TAG_PREFIX).
+
+    Example usage:
+    > @tag(foo='bar', a_tag_key='a_tag_value', **{'namespace.tag_key': 'tag_value'})
+    > def my_function(...) -> ...:
+    >   ...
+    """
+
+    RESERVED_TAG_NAMESPACES = [
+        'hamilton',
+        'data_quality',
+        'gdpr',
+        'ccpa',
+        'dag',
+        'module',
+    ]  # Anything that starts with any of these is banned, the framework reserves the right to manage it
+
+    def __init__(self, **tags: str):
+        """Constructor for adding tag annotations to a function.
+
+        :param tags: the keys are always going to be strings, so the type annotation here means the values are strings.
+            Implicitly this is `Dict[str, str]` but the PEP guideline is to only annotate it with `str`.
+        """
+        self.tags = tags
+
+    def decorate_node(self, node_: node.Node) -> node.Node:
+        """Decorates the nodes produced by this with the specified tags
+
+        :param node_: Node to decorate
+        :return: Copy of the node, with tags assigned
+        """
+        unioned_tags = self.tags.copy()
+        unioned_tags.update(node_.tags)
+        return node.Node(
+            name=node_.name,
+            typ=node_.type,
+            doc_string=node_.documentation,
+            callabl=node_.callable,
+            node_source=node_.node_source,
+            input_types=node_.input_types,
+            tags=unioned_tags)
+
+    @staticmethod
+    def _key_allowed(key: str) -> bool:
+        """Validates that a tag key is allowed. Rules are:
+        1. It must not be empty
+        2. It can have dots, which specify a hierarchy of order
+        3. All components, when split by dots, must be valid python identifiers
+        4. It cannot utilize a reserved namespace
+
+        :param key: The key to validate
+        :return: True if it is valid, False if not
+        """
+        key_components = key.split('.')
+        if len(key_components) == 0:
+            # empty string...
+            return False
+        if key_components[0] in tag.RESERVED_TAG_NAMESPACES:
+            # Reserved prefixes
+            return False
+        for key in key_components:
+            if not key.isidentifier():
+                return False
+        return True
+
+    @staticmethod
+    def _value_allowed(value: Any) -> bool:
+        """Validates that a tag value is allowed. Rules are only that it must be a string.
+
+        :param value: Value to validate
+        :return: True if it is valid, False otherwise
+        """
+        if not isinstance(value, str):
+            return False
+        return True
+
+    def validate(self, fn: Callable):
+        """Validates the decorator. In this case that the set of tags produced is final.
+
+        :param fn: Function that the decorator is called on.
+        :raises ValueError: if the specified tags contains invalid ones
+        """
+        bad_tags = set()
+        for key, value in self.tags.items():
+            if (not tag._key_allowed(key)) or (not tag._value_allowed(value)):
+                bad_tags.add((key, value))
+        if bad_tags:
+            bad_tags_formatted = ','.join([f'{key}={value}' for key, value in bad_tags])
+            raise InvalidDecoratorException(f'The following tags are invalid as tags: {bad_tags_formatted} '
+                                            'Tag keys can be split by ., to represent a hierarchy, '
+                                            'but each element of the hierarchy must be a valid python identifier. '
+                                            'Paths components also cannot be empty. '
+                                            'The value can be anything. Note that the following top-level prefixes are '
+                                            f'reserved as well: {self.RESERVED_TAG_NAMESPACES}')
