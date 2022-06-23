@@ -9,8 +9,8 @@ from hamilton.data_quality import base
 import pandas as pd
 from datetime import datetime
 
-Comparable = NewType("Comparable", Union[float, datetime])
 
+Comparable = NewType("Comparable", Union[float, datetime])
 
 
 class BaseDefaultValidator(base.DataValidator, abc.ABC):
@@ -59,13 +59,14 @@ class DataInRangeValidatorPandas(BaseDefaultValidator):
         self.range = range
         self.lower, self.upper = self.range
 
+
     @classmethod
     def arg(cls) -> str:
         return 'range'
 
     @classmethod
     def applies_to(cls, datatype: Type[Type]) -> bool:
-        return issubclass(datatype, Union[pd.Series, pd.DataFrame])# TODO -- handle dataframes?
+        return issubclass(datatype, Union[pd.Series, pd.DataFrame])
 
     @classmethod
     def name(cls) -> str:
@@ -100,6 +101,7 @@ class DataInRangeValidatorPandas(BaseDefaultValidator):
         out_range = counts.get(False, 0)
         passes = out_range == 0
         message = f'Series contains {in_range} values in range ({self.lower},{self.upper}), and {out_range} outside. Data observed in range [{empirical_min}, {empirical_max}].'
+
         return base.ValidationResult(
             passes=passes,
             message=message,
@@ -144,7 +146,6 @@ class DataInRangeValidatorPandas(BaseDefaultValidator):
             message=message,
             diagnostics=out_range
         )
-
 
 
 

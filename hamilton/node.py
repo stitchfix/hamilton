@@ -50,7 +50,7 @@ class Node(object):
         :param callabl: the actual function callable.
         :param node_source: whether this is something someone has to pass in.
         :param input_types: the input parameters and their types.
-        :param tags: the set of tags that this node contains. This is a nested dictionary of keys/values.
+        :param tags: the set of tags that this node contains.
         """
         if tags is None:
             tags = dict()
@@ -123,14 +123,17 @@ class Node(object):
         return self._depended_on_by
 
     @property
-    def tags(self) -> Dict[str, Any]:
+    def tags(self) -> Dict[str, str]:
         return self._tags
+
+    def add_tag(self, tag_name: str, tag_value: str):
+        self._tags[tag_name] = tag_value
 
     def __hash__(self):
         return hash(self._name)
 
     def __repr__(self):
-        return f'<{self._name}>'
+        return f'<{self._name} {self._tags}>'
 
     def __eq__(self, other: 'Node'):
         """Want to deeply compare nodes in a custom way.
@@ -143,6 +146,7 @@ class Node(object):
                 self._name == other.name and
                 self._type == other.type and
                 self._doc == other.documentation and
+                self._tags == other.tags and
                 self.user_defined == other.user_defined and
                 [n.name for n in self.dependencies] == [o.name for o in other.dependencies] and
                 [n.name for n in self.depended_on_by] == [o.name for o in other.depended_on_by] and
@@ -162,4 +166,7 @@ class Node(object):
         if name is None:
             name = fn.__name__
         sig = inspect.signature(fn)
-        return Node(name, sig.return_annotation, fn.__doc__ if fn.__doc__ else '', callabl=fn)
+        module = inspect.getmodule(fn).__name__
+        return Node(name, sig.return_annotation, fn.__doc__ if fn.__doc__ else '', callabl=fn,
+                    tags={'module': module})
+

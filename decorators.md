@@ -218,7 +218,7 @@ To make this easier, we have a few more `@config` decorators:
 ## @tag
 
 Allows you to attach metadata to a node (any node decorated with the function).
-A common use of this is to enable marking nodes as part of some data product.
+A common use of this is to enable marking nodes as part of some data product, or for GDPR/privacy purposes.
 
 For instance:
 
@@ -229,10 +229,50 @@ from hamilton.function_modifiers import tag
 def intermediate_column() -> pd.Series:
     pass
 
-@tag(data_product='final')
+@tag(data_product='final', pii='true')
 def final_column(intermediate_column: pd.Series) -> pd.Series:
     pass
 ```
 
-Using the `list_available_variables()` capability exposes tags along with variables,
-enabling querying of the available variables for specific tag matches.
+### How do I query by tags?
+Right now, we don't have a specific interface to query by tags, however we do expose them via the driver.
+Using the `list_available_variables()` capability exposes tags along with their names & types,
+enabling querying of the available outputs for specific tag matches.
+E.g.
+```python
+
+from hamilton import driver
+dr = driver.Driver(...)  # create driver as required
+all_possible_outputs = dr.list_available_variables()
+desired_outputs = [o.name for o in all_possible_outputs
+                   if 'my_tag_value' == o.tags.get('my_tag_key')]
+output = dr.execute(desired_outputs)
+```
+
+## @check_output
+
+The `@check_output` decorator enables you to add simple data quality checks to your code.
+
+For example:
+
+```python
+import pandas as pd
+import numpy as np
+from hamilton.function_modifiers import check_output
+
+@check_output(
+    datatype=np.int64,
+    data_in_range=(0,100),
+)
+def some_int_data_between_0_and_100() -> pd.Series:
+    pass
+```
+
+The check_output validator takes in arguments that each correspond to one of the default validators.
+These arguments tell it to add the default validator to the list. The above thus creates
+two validators, one that checks the datatype of the series, and one that checks whether the data is in a certain range.
+
+Note that you can also specify custom decorators using the `@check_output_custom` decorator.
+
+See [data_quality](data_quality.md) for more information on available validators and how to build custom ones.
+

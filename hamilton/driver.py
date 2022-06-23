@@ -107,14 +107,16 @@ class Driver(object):
                 overrides: Dict[str, Any] = None,
                 display_graph: bool = False,
                 inputs: Dict[str, Any] = None,
-                ) -> pd.DataFrame:
+                ) -> Any:
         """Executes computation.
 
-        :param final_vars: the final list of variables we want in the data frame.
-        :param overrides: the user defined input variables.
+        :param final_vars: the final list of variables we want to compute.
+        :param overrides: values that will override "nodes" in the DAG.
         :param display_graph: DEPRECATED. Whether we want to display the graph being computed.
         :param inputs: Runtime inputs to the DAG.
-        :return: a data frame consisting of the variables requested.
+        :return: an object consisting of the variables requested, matching the type returned by the GraphAdapter.
+            See constructor for how the GraphAdapter is initialized. The default one right now returns a pandas
+            dataframe.
         """
         if display_graph:
             logger.warning('display_graph=True is deprecated. It will be removed in the 2.0.0 release. '
@@ -157,22 +159,26 @@ class Driver(object):
         return outputs
 
     def list_available_variables(self) -> List[Variable]:
-        """Returns available variables.
+        """Returns available variables, i.e. outputs.
 
-        :return: list of available variables.
+        :return: list of available variables (i.e. outputs).
         """
         return [Variable(node.name, node.type, node.tags) for node in self.graph.get_nodes()]
 
-    def display_all_functions(self, output_file_path: str, render_kwargs: dict = None):
+    def display_all_functions(self, output_file_path: str, render_kwargs: dict = None, graphviz_kwargs: dict = None):
         """Displays the graph of all functions loaded!
 
         :param output_file_path: the full URI of path + file name to save the dot file to.
             E.g. 'some/path/graph-all.dot'
         :param render_kwargs: a dictionary of values we'll pass to graphviz render function. Defaults to viewing.
             If you do not want to view the file, pass in `{'view':False}`.
+            See https://graphviz.readthedocs.io/en/stable/api.html#graphviz.Graph.render for other options.
+        :param graphviz_kwargs: Optional. Kwargs to be passed to the graphviz graph object to configure it.
+            E.g. dict(graph_attr={'ratio': '1'}) will set the aspect ratio to be equal of the produced image.
+            See https://graphviz.org/doc/info/attrs.html for options.
         """
         try:
-            self.graph.display_all(output_file_path, render_kwargs)
+            self.graph.display_all(output_file_path, render_kwargs, graphviz_kwargs)
         except ImportError as e:
             logger.warning(f'Unable to import {e}', exc_info=True)
 
@@ -180,7 +186,8 @@ class Driver(object):
                             final_vars: List[str],
                             output_file_path: str,
                             render_kwargs: dict,
-                            inputs: Dict[str, Any] = None):
+                            inputs: Dict[str, Any] = None,
+                            graphviz_kwargs: dict = None):
         """Visualizes Execution.
 
         Note: overrides are not handled at this time.
@@ -190,12 +197,17 @@ class Driver(object):
             E.g. 'some/path/graph.dot'
         :param render_kwargs: a dictionary of values we'll pass to graphviz render function. Defaults to viewing.
             If you do not want to view the file, pass in `{'view':False}`.
+            See https://graphviz.readthedocs.io/en/stable/api.html#graphviz.Graph.render for other options.
         :param inputs: Optional. Runtime inputs to the DAG.
+        :param graphviz_kwargs: Optional. Kwargs to be passed to the graphviz graph object to configure it.
+            E.g. dict(graph_attr={'ratio': '1'}) will set the aspect ratio to be equal of the produced image.
+            See https://graphviz.org/doc/info/attrs.html for options.
         """
         nodes, user_nodes = self.graph.get_upstream_nodes(final_vars, inputs)
         self.validate_inputs(user_nodes, inputs)
         try:
-            self.graph.display(nodes, user_nodes, output_file_path, render_kwargs=render_kwargs)
+            self.graph.display(nodes, user_nodes, output_file_path,
+                               render_kwargs=render_kwargs, graphviz_kwargs=graphviz_kwargs)
         except ImportError as e:
             logger.warning(f'Unable to import {e}', exc_info=True)
 
@@ -208,6 +220,51 @@ class Driver(object):
         # get graph we'd be executing over
         nodes, user_nodes = self.graph.get_upstream_nodes(final_vars)
         return self.graph.has_cycles(nodes, user_nodes)
+
+    def what_is_downstream_of(self, *node_names: str) -> List[Variable]:
+        """Tells you what is downstream of this function(s), i.e. node(s).
+
+        :param node_names: names of function(s) that are starting points for traversing the graph.
+        :return: list of "variables" (i.e. nodes), inclusive of the function names, that are downstream of the passed
+                in function names.
+        """
+        downstream_nodes = self.graph.get_impacted_nodes(list(node_names))
+        return [Variable(node.name, node.type, node.tags) for node in downstream_nodes]
+
+    def display_downstream_of(self,
+                              *node_names: str,
+                              output_file_path: str,
+                              render_kwargs: dict,
+                              graphviz_kwargs: dict):
+        """Creates a visualization of the DAG starting from the passed in function name(s).
+
+        Note: for any "node" visualized, we will also add its parents to the visualization as well, so
+        there could be more nodes visualized than strictly what is downstream of the passed in function name(s).
+
+        :param node_names: names of function(s) that are starting points for traversing the graph.
+        :param output_file_path: the full URI of path + file name to save the dot file to.
+            E.g. 'some/path/graph.dot'
+        :param render_kwargs: a dictionary of values we'll pass to graphviz render function. Defaults to viewing.
+            If you do not want to view the file, pass in `{'view':False}`.
+        :param graphviz_kwargs: Kwargs to be passed to the graphviz graph object to configure it.
+            E.g. dict(graph_attr={'ratio': '1'}) will set the aspect ratio to be equal of the produced image.
+        """
+        downstream_nodes = self.graph.get_impacted_nodes(list(node_names))
+        try:
+            self.graph.display(downstream_nodes, set(), output_file_path,
+                               render_kwargs=render_kwargs, graphviz_kwargs=graphviz_kwargs)
+        except ImportError as e:
+            logger.warning(f'Unable to import {e}', exc_info=True)
+
+    def what_is_upstream_of(self, *node_names: str) -> List[Variable]:
+        """Tells you what is upstream of this function(s), i.e. node(s).
+
+        :param node_names: names of function(s) that are starting points for traversing the graph backwards.
+        :return: list of "variables" (i.e. nodes), inclusive of the function names, that are upstream of the passed
+                in function names.
+        """
+        upstream_nodes, _ = self.graph.get_upstream_nodes(list(node_names))
+        return [Variable(node.name, node.type, node.tags) for node in upstream_nodes]
 
 
 if __name__ == '__main__':
