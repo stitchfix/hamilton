@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pandas as pd
 from hamilton import driver
-from hamilton import base
+from hamilton import ad_hoc_utils
 
 logging.basicConfig(stream=sys.stdout)
 
@@ -30,9 +30,9 @@ def log_spend_per_signup(spend_per_signup: pd.Series) -> pd.Series:
     return np.log(spend_per_signup)
 
 
-# Place the functions into a curated object -- the idea is that this object should be a curated set of functions.
+# Place the functions into a temporary module -- the idea is that this should house a curated set of functions.
 # Don't be afraid to make multiple of them.
-temp_module = base.TemporaryFunctionModule(spend, signups, log_spend_per_signup)
+temp_module = ad_hoc_utils.create_temporary_module(spend, signups, log_spend_per_signup, module_name='function_example')
 
 # Cell 4 - Instantiate the Hamilton driver and pass it the right things in.
 initial_config = {}
