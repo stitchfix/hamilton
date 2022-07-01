@@ -6,7 +6,6 @@ import abc
 import collections
 import inspect
 import typing
-from typing import Callable
 
 import pandas as pd
 import numpy as np
