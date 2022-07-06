@@ -3,7 +3,7 @@ import functools
 import logging
 import inspect
 import typing
-from typing import Dict, Callable, Collection, Tuple, Union, Any, Type, List, NamedTuple
+from typing import Dict, Callable, Collection, Tuple, Union, Any, Type, List, Optional
 
 import pandas as pd
 import typing_inspect
@@ -749,6 +749,48 @@ DATA_VALIDATOR_ORIGINAL_OUTPUT_TAG = 'hamilton.data_quality.source_node'
 
 class BaseDataValidationDecorator(function_modifiers_base.NodeTransformer):
 
+    def __init__(self, applies_to: Optional[List[str]] = None):
+        self.applies_to = applies_to
+
+    def should_validate(self, node_: node.Node, config: Dict[str, Any], validator_name: str) -> bool:
+        """Quick POC that we can wire stuff through as needed.
+
+        Say one has a node called `foo`. We might want the following:
+
+        0. Disable all data validation globally
+        1. Disable all data validation for foo
+        2. Disable a few checks for foo but not all
+
+        This would translate to config:
+        0. "data_quality.disable = True"
+        1. "data_quality.foo.disable = True"
+        2. "data_quality.foo.disable = ['check_1, 'check_2']
+        """
+        if self.applies_to is not None and node_.name not in self.applies_to:
+            return False # Not something we want to validate
+        global_disable_key = f"data_quality.disable"
+        if global_disable_key in config and config[global_disable_key] is True:
+            return False
+        local_disable_key = f"data_quality.{node_.name}.disable"
+        if local_disable_key not in config:
+            return False
+        local_disable_value = config.get(local_disable_key, False)
+        if local_disable_value is True:
+            return False
+        elif isinstance(local_disable_value, list):
+            return validator_name in local_disable_value
+
+    def get_profiler(self, node_to_profile: node.Node) -> Optional[base.DataProfiler]:
+        """Gets a profiler if it exists. This is a step in between the data and the validators.
+        Note if there is no profiler we will go straight to validation. If there *is* a profiler,
+        the validator will end up taking in that datatype
+
+
+        @param node_to_validate: Node to profile
+        @return: The profiler if required.
+        """
+        return None
+
     @abc.abstractmethod
     def get_validators(self, node_to_validate: node.Node) -> List[base.DataValidator]:
         """Returns a list of validators used to transform the nodes.
@@ -759,7 +801,13 @@ class BaseDataValidationDecorator(function_modifiers_base.NodeTransformer):
         pass
 
     def transform_node(self, node_: node.Node, config: Dict[str, Any], fn: Callable) -> Collection[node.Node]:
-        raw_node = node.Node(
+        validators = self.get_validators(node_)
+        # This is a hacky way to do this, but proves out that we can
+        # Note we can also add more complex config parsing here as needed (for warning levels, actions, parameter overrides...)
+        validators_to_use = [item for item in validators if self.should_validate(node_, config, item.name())]
+        if len(validators_to_use) == 0:
+            return [node_]  # Short-circuits to avoid the complexity
+        node_to_validate = node.Node(
             name=node_.name + '_raw',  # TODO -- make this unique -- this will break with multiple validation decorators, which we *don't* want
             typ=node_.type,
             doc_string=node_.documentation,
@@ -767,10 +815,23 @@ class BaseDataValidationDecorator(function_modifiers_base.NodeTransformer):
             node_source=node_.node_source,
             input_types=node_.input_types,
             tags=node_.tags)
-        validators = self.get_validators(node_)
+
+        raw_node = node_to_validate
+        profiler_node = None
+        profiler = self.get_profiler(node_)
+        if profiler is not None:
+            node_to_validate = node.Node(
+                name=node_.name + '_profile',
+                typ=profiler.profile_type(),
+                doc_string=profiler.description(),
+                callabl=profiler.profile,
+                input_types={node_.name + '_raw': node_.type},
+                tags=node_.tags  # TODO -- determine the right tags here?
+            )
+
         validator_nodes = []
         validator_name_map = {}
-        for validator in validators:
+        for validator in validators_to_use:
             def validation_function(validator_to_call: base.DataValidator = validator, **kwargs):
                 result = list(kwargs.values())[0]  # This should just have one kwarg
                 return validator_to_call.validate(result)
@@ -782,7 +843,7 @@ class BaseDataValidationDecorator(function_modifiers_base.NodeTransformer):
                 doc_string=validator.description(),
                 callabl=validation_function,
                 node_source=node.NodeSource.STANDARD,
-                input_types={raw_node.name: (node_.type, node.DependencyType.REQUIRED)},
+                input_types={node_to_validate.name: (node_.type, node.DependencyType.REQUIRED)},
                 tags={
                     **node_.tags,
                     **{
@@ -804,7 +865,7 @@ class BaseDataValidationDecorator(function_modifiers_base.NodeTransformer):
             """
             for validator_node in validator_nodes:
                 data_quality.base.act(kwargs[validator_node.name], validator=validator_name_map[validator_node.name])
-            return kwargs[raw_node.name]
+            return kwargs[node_to_validate.name]
 
         final_node = node.Node(
             name=node_.name,
@@ -813,26 +874,31 @@ class BaseDataValidationDecorator(function_modifiers_base.NodeTransformer):
             callabl=final_node_callable,
             node_source=node_.node_source,
             input_types={
-                raw_node.name: (node_.type, node.DependencyType.REQUIRED),
+                node_to_validate.name: (node_.type, node.DependencyType.REQUIRED),
                 **{validator_node.name: (validator_node.type, node.DependencyType.REQUIRED) for validator_node in validator_nodes}},
             tags=node_.tags)
-        return [*validator_nodes, final_node, raw_node]
+        return [*validator_nodes, final_node, raw_node] + ([] if profiler_node is None else [profiler_node])
 
     def validate(self, fn: Callable):
         pass
 
 
 class check_output_custom(BaseDataValidationDecorator):
-    def __init__(self, *validators: base.DataValidator):
+    def __init__(self, *validators: base.DataValidator, profiler: base.DataProfiler, applies_to: Optional[List[str]] = None):
         """Creates a check_output_custom decorator. This allows
         passing of custom validators that implement the DataValidator interface.
 
         @param validator: Validator to use.
         """
+        super(check_output_custom).__init__(applies_to=applies_to)
         self.validators = validators
+        self.profiler = profiler
 
     def get_validators(self, node_to_validate: node.Node) -> List[base.DataValidator]:
         return self.validators
+
+    def get_profiler(self, node_to_profile: node.Node) -> List[base.DataProfiler]:
+        return self.profiler
 
 
 class check_output(BaseDataValidationDecorator):
@@ -846,6 +912,7 @@ class check_output(BaseDataValidationDecorator):
     def __init__(self,
                  importance: str = base.DataValidationLevel.WARN.value,
                  default_decorator_candidates: Type[hamilton.data_quality.base.BaseDefaultValidator] = None,
+                 *, applies_to: List[str] = None,
                  **default_validator_kwargs: Any):
         """Creates the check_output validator. This constructs the default validator class.
         Note that this creates a whole set of default validators
@@ -854,6 +921,7 @@ class check_output(BaseDataValidationDecorator):
         :param importance: For the default validator, how important is it that this passes.
         :param validator_kwargs: keyword arguments to be passed to the validator
         """
+        super(check_output, self).__init__(applies_to=applies_to)
         self.importance = importance
         self.default_validator_kwargs = default_validator_kwargs
         self.default_decorator_candidates = default_decorator_candidates
