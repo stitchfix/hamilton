@@ -1,4 +1,4 @@
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Set
 
 import numpy as np
 import pandas as pd
@@ -338,6 +338,21 @@ def test_does_function_modifier():
     assert node.documentation == to_modify.__doc__
 
 
+def test_does_function_modifier_complex_types():
+    def setify(**kwargs: List[int]) -> Set[int]:
+        return set(sum(kwargs.values(), []))
+
+    def to_modify(param1: List[int], param2: List[int]) -> int:
+        """This sums the inputs it gets..."""
+        pass
+
+    annotation = does(setify)
+    node = annotation.generate_node(to_modify, {})
+    assert node.name == 'to_modify'
+    assert node.callable(param1=[1, 2, 3], param2=[4, 5, 6]) == {1, 2, 3, 4, 5, 6}
+    assert node.documentation == to_modify.__doc__
+
+
 def test_model_modifier():
     config = {
         'my_column_model_params': {
@@ -672,7 +687,7 @@ def test_check_output_custom_node_transform():
     data_validators = [value for value in subdag_as_dict.values() if value.tags.get('hamilton.data_quality.contains_dq_results', False)]
     assert len(data_validators) == 2  # One for each validator
     first_validator, _ = data_validators
-    assert IS_DATA_VALIDATOR_TAG in first_validator.tags and first_validator.tags[IS_DATA_VALIDATOR_TAG] is True # Validates that all the required tags are included
+    assert IS_DATA_VALIDATOR_TAG in first_validator.tags and first_validator.tags[IS_DATA_VALIDATOR_TAG] is True  # Validates that all the required tags are included
     assert DATA_VALIDATOR_ORIGINAL_OUTPUT_TAG in first_validator.tags and first_validator.tags[DATA_VALIDATOR_ORIGINAL_OUTPUT_TAG] == 'fn'
 
     # The final function should take in everything but only use the raw results

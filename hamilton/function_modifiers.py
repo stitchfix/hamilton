@@ -8,7 +8,7 @@ from typing import Dict, Callable, Collection, Tuple, Union, Any, Type, List
 import pandas as pd
 import typing_inspect
 
-from hamilton import node
+from hamilton import node, type_utils
 from hamilton.data_quality import base as dq_base
 from hamilton.data_quality import default_validators
 from hamilton import function_modifiers_base
@@ -441,7 +441,7 @@ class does(function_modifiers_base.NodeCreator):
         """
         annotation_fn = inspect.signature(fn).return_annotation
         annotation_todo = inspect.signature(todo).return_annotation
-        if not issubclass(annotation_todo, annotation_fn):
+        if not type_utils.custom_subclass_check(annotation_fn, annotation_todo):
             raise InvalidDecoratorException(f'Output types: {annotation_fn} and {annotation_todo} are not compatible')
 
     @staticmethod
