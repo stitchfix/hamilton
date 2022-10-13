@@ -1,0 +1,4 @@
+dataclasses; python_version < '3.7'
+numpy
+pandas
+typing_inspect
