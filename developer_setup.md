@@ -20,6 +20,7 @@ This repository is organized as follows:
 8. Push to github and create a PR.
 9. When you push to github circle ci will kick off unit tests and migration tests (for Stitch Fix users only).
 
+
 ## How to run unit tests
 
 You need to have installed the `requirements-test.txt` dependencies into the environment you're running for this to work. You can run tests two ways:
@@ -68,6 +69,12 @@ You can debug and execute unit tests in pycharm easily. To set it up, you just h
 add New > Python Tests > pytest. You then want to specify the `tests/` folder under `Script path`, and ensure the
 python environment executing it is the appropriate one with all the dependencies installed. If you add `-v` to the
 additional arguments part, you'll then get verbose diffs if any tests fail.
+
+### Using circle ci locally
+
+You need to install the circleci command line tooling for this to work. See the unit testing algo curriculum slides for details.
+Once you have installed it you just need to run `circleci local execute` from the root directory and it'll run the entire suite of tests
+that are setup to run each time you push a commit to a branch in github.
 
 # Pushing to pypi
 These are the steps to push to pypi. This is taken from the [python packaging tutorial](https://packaging.python.org/tutorials/packaging-projects/#generating-distribution-archives).
