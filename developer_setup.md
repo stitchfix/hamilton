@@ -75,6 +75,7 @@ additional arguments part, you'll then get verbose diffs if any tests fail.
 ### Using circle ci locally
 
 You need to install the circleci command line tooling for this to work.
+See https://circleci.com/docs/local-cli/ for details.
 Once you have installed it you just need to run `circleci local execute` from the root directory and it'll run the entire suite of tests
 that are setup to run each time you push a commit to a branch in github.
 
