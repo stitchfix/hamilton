@@ -31,7 +31,7 @@ from the command line.
 
 ### Running tests in Docker
 
-The easiest way to run `hamilton`'s unit tests is to simulate its continuous integration (CI) environment in docker.
+The most reliable to run `hamilton`'s unit tests is to simulate its continuous integration (CI) environment in docker.
 
 `hamilton`'s CI logic is defined in shell scripts, whose behavior changes based on environment variable `TASK`.
 
