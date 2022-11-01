@@ -1,231 +1,77 @@
-## Python CircleCI 2.0 configuration file
-##
-## Check https://circleci.com/docs/2.0/language-python/ for more details
-##
-
-version: 2
+version: 2.1
 jobs:
-  build-py36:
+  test:
+    parameters:
+      python-version:
+        type: string
+      task:
+        type: string
     docker:
-      - image: circleci/python:3.6
-    environment:
-      TASK: tests
+      - image: circleci/python:<< parameters.python-version>>
     steps:
       - checkout
       - run:
-          name: install hamilton dependencies
-          command: |
-            .ci/setup.sh
+          name: install dependencies
+          command: .ci/setup.sh
       - run:
           name: run tests
-          command: |
-            .ci/test.sh
-  build-py37:
-    docker:
-      - image: circleci/python:3.7
-    environment:
-      TASK: tests
-    steps:
-      - checkout
-      - run:
-          name: install hamilton dependencies
-          command: |
-           .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  build-py38:
-    docker:
-      - image: circleci/python:3.8
-    environment:
-      TASK: tests
-    steps:
-      - checkout
-      - run:
-          name: install hamilton dependencies
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  build-py39:
-    docker:
-      - image: circleci/python:3.9
-    environment:
-      TASK: tests
-    steps:
-      - checkout
-      - run:
-          name: install hamilton dependencies
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-
-  pre-commit:
-    docker:
-      - image: circleci/python:3.7
-    steps:
-      - checkout
-      - run:
-          name: run pre-commit hooks
-          command: |
-            pip install pre-commit
-            pre-commit run --all-files
-  dask-py36:
-    docker:
-      - image: circleci/python:3.6
-    environment:
-      TASK: dask
-    steps:
-      - checkout
-      - run:
-          name: install hamilton dependencies + dask
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  dask-py37:
-    docker:
-      - image: circleci/python:3.7
-    environment:
-      TASK: dask
-    steps:
-      - checkout
-      - run:
-          name: install hamilton dependencies + dask
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  ray-py37:
-    docker:
-      - image: circleci/python:3.7
-    environment:
-      TASK: ray
-    steps:
-      - checkout
-      - run:
-          name: install hamilton dependencies + ray
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  spark-py38:
-    docker:
-      - image: circleci/python:3.8
-    environment:
-      TASK: pyspark
-    steps:
-      - checkout
-      - run:
-          name: install hamilton dependencies + spark
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  integrations-py36:
-    docker:
-      - image: circleci/python:3.6
-    environment:
-      TASK: integrations
-    steps:
-      - checkout
-      - run:
-          name: install all python dependencies for integrations
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  integrations-py37:
-    docker:
-      - image: circleci/python:3.7
-    environment:
-      TASK: integrations
-    steps:
-      - checkout
-      - run:
-          name: install all python dependencies for integrations
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  integrations-py38:
-    docker:
-      - image: circleci/python:3.8
-    environment:
-      TASK: integrations
-    steps:
-      - checkout
-      - run:
-          name: install all python dependencies for integrations
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  integrations-py39:
-    docker:
-      - image: circleci/python:3.9
-    environment:
-      TASK: integrations
-    steps:
-      - checkout
-      - run:
-          name: install all python dependencies for integrations
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
-  asyncio-py39:
-    docker:
-      - image: circleci/python:3.9
-    environment:
-      TASK: async
-    steps:
-      - checkout
-      - run:
-          name: install hamilton dependencies + testing dependencies
-          command: |
-            .ci/setup.sh
-      - run:
-          name: run tests
-          command: |
-            .ci/test.sh
+          command: .ci/test.sh
 workflows:
-  version: 2
   unit-test-workflow:
     jobs:
-      - build-py36
-      - build-py37
-      - build-py38
-      - build-py39
-      - pre-commit
-      - dask-py36
-      - dask-py37
-      - ray-py37
-      - spark-py38
-      - integrations-py36
-      - integrations-py37
-      - integrations-py38
-      - integrations-py39
-      - asyncio-py39
+      - test:
+          name: build-py36
+          python-version: '3.6'
+          task: tests
+      - test:
+          name: build-py37
+          python-version: '3.7'
+          task: tests
+      - test:
+          name: build-py38
+          python-version: '3.8'
+          task: tests
+      - test:
+          name: build-py39
+          python-version: '3.9'
+          task: tests
+      - test:
+          name: pre-commit
+          python-version: '3.9'
+          task: pre-commit
+      - test:
+          name: dask-py36
+          python-version: '3.6'
+          task: dask
+      - test:
+          name: dask-py37
+          python-version: '3.7'
+          task: dask
+      - test:
+          name: ray-py37
+          python-version: '3.7'
+          task: ray
+      - test:
+          name: spark-py38
+          python-version: '3.8'
+          task: pyspark
+      - test:
+          name: integrations-py36
+          python-version: '3.6'
+          task: integrations
+      - test:
+          name: integrations-py37
+          python-version: '3.7'
+          task: integrations
+      - test:
+          name: integrations-py38
+          python-version: '3.8'
+          task: integrations
+      - test:
+          name: integrations-py39
+          python-version: '3.9'
+          task: integrations
+      - test:
+          name: asyncio-py39
+          python-version: '3.9'
+          task: asyncio
