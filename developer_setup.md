@@ -31,7 +31,7 @@ from the command line.
 
 ### Running tests in Docker
 
-The most reliable to run `hamilton`'s unit tests is to simulate its continuous integration (CI) environment in docker.
+The most reliable way to run `hamilton`'s unit tests is to simulate its continuous integration (CI) environment in docker.
 
 `hamilton`'s CI logic is defined in shell scripts, whose behavior changes based on environment variable `TASK`.
 
@@ -74,7 +74,7 @@ additional arguments part, you'll then get verbose diffs if any tests fail.
 
 ### Using circle ci locally
 
-You need to install the circleci command line tooling for this to work. See the unit testing algo curriculum slides for details.
+You need to install the circleci command line tooling for this to work.
 Once you have installed it you just need to run `circleci local execute` from the root directory and it'll run the entire suite of tests
 that are setup to run each time you push a commit to a branch in github.
 
