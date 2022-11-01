@@ -7,7 +7,9 @@ jobs:
       task:
         type: string
     docker:
-      - image: circleci/python:<< parameters.python-version>>
+      - image: circleci/python:<< parameters.python-version >>
+    environment:
+      TASK: << parameters.task >>
     steps:
       - checkout
       - run:
