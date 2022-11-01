@@ -20,7 +20,6 @@ jobs:
           name: run tests
           command: |
             .ci/test.sh
-
   build-py37:
     docker:
       - image: circleci/python:3.7
@@ -36,7 +35,6 @@ jobs:
           name: run tests
           command: |
             .ci/test.sh
-
   build-py38:
     docker:
       - image: circleci/python:3.8
@@ -52,7 +50,6 @@ jobs:
           name: run tests
           command: |
             .ci/test.sh
-
   build-py39:
     docker:
       - image: circleci/python:3.9
@@ -126,30 +123,19 @@ jobs:
             .ci/test.sh
   spark-py38:
     docker:
-      - image: cimg/openjdk:14.0   # need java on it
-
+      - image: circleci/python:3.8
+    environment:
+      TASK: pyspark
     steps:
       - checkout
       - run:
           name: install hamilton dependencies + spark
           command: |
-            # venv & pip weren't installed -- so have to do this hacky stuff
-            sudo apt-get update
-            sudo apt-get install aptitude
-            sudo aptitude install python3.8-venv -y
-            python3.8 -m venv venv
-            . venv/bin/activate
-            python3.8 --version
-            pip3.8 --version
-            pip3.8 install -r requirements-test.txt
-            pip3.8 install -e ".[pyspark]" # note bdist will error, but things install fine enough to run!
-
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest graph_adapter_tests/h_spark
+            .ci/test.sh
   integrations-py36:
     docker:
       - image: circleci/python:3.6
