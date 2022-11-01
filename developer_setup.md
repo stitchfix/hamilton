@@ -52,6 +52,8 @@ PYTHON_VERSION='3.8'
 TASK=tests
 ```
 
+Then run the tests for that combination in a container.
+
 ```shell
 docker run \
   --rm \
