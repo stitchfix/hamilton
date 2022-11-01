@@ -20,7 +20,6 @@ This repository is organized as follows:
 8. Push to github and create a PR.
 9. When you push to github circle ci will kick off unit tests and migration tests (for Stitch Fix users only).
 
-
 ## How to run unit tests
 
 You need to have installed the `requirements-test.txt` dependencies into the environment you're running for this to work. You can run tests two ways:
@@ -29,18 +28,46 @@ You need to have installed the `requirements-test.txt` dependencies into the env
 2. Using circle ci locally. The config for this lives in `.circleci/config.yml` which also shows commands to run tests
 from the command line.
 
+### Running tests in Docker
+
+The easiest way to run `hamilton`'s unit tests is to simulate its continuous integration (CI) environment in docker.
+
+`hamilton`'s CI logic is defined in shell scripts, whose behavior changes based on environment variable `TASK`.
+
+The following values for `TASK` are recognized:
+
+* `async` = unit tests using the async driver
+* `dask` = unit tests using the `dask` adapter
+* `integrations` = tests on integrations with other frameworks
+* `pre-commit` = static analysis (i.e. linting)
+* `pyspark` = unit tests using the `spark` adapter
+* `ray` = unit tests using the `ray` adapter
+* `tests` = core unit tests with minimal requirements
+
+Choose a Python version and task.
+
+```shell
+PYTHON_VERSION='3.8'
+TASK=tests
+```
+
+```shell
+docker run \
+  --rm \
+  --entrypoint="" \
+  -v "$(pwd)":/opt/testing \
+  --workdir /opt/testing \
+  --env TASK=${TASK} \
+  -it circleci/python:${PYTHON_VERSION} \
+  /bin/bash -c '.ci/setup.sh && .ci/test.sh'
+```
+
 ### Using pycharm to execute & debug unit tests
 
 You can debug and execute unit tests in pycharm easily. To set it up, you just hit `Edit configurations` and then
 add New > Python Tests > pytest. You then want to specify the `tests/` folder under `Script path`, and ensure the
 python environment executing it is the appropriate one with all the dependencies installed. If you add `-v` to the
 additional arguments part, you'll then get verbose diffs if any tests fail.
-
-### Using circle ci locally
-
-You need to install the circleci command line tooling for this to work. See the unit testing algo curriculum slides for details.
-Once you have installed it you just need to run `circleci local execute` from the root directory and it'll run the entire suite of tests
-that are setup to run each time you push a commit to a branch in github.
 
 # Pushing to pypi
 These are the steps to push to pypi. This is taken from the [python packaging tutorial](https://packaging.python.org/tutorials/packaging-projects/#generating-distribution-archives).

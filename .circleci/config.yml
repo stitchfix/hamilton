@@ -8,97 +8,66 @@ jobs:
   build-py36:
     docker:
       - image: circleci/python:3.6
-
+    environment:
+      TASK: tests
     steps:
       - checkout
       - run:
           name: install hamilton dependencies
           command: |
-            sudo apt install graphviz
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -r requirements-test.txt
-            pip install -r requirements.txt
-        # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest --cov=hamilton tests/ --ignore tests/integrations
+            .ci/test.sh
 
   build-py37:
     docker:
       - image: circleci/python:3.7
-
+    environment:
+      TASK: tests
     steps:
       - checkout
       - run:
           name: install hamilton dependencies
           command: |
-            sudo apt install graphviz
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -r requirements-test.txt
-            pip install -r requirements.txt
-
-      # run tests!
+           .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest --cov=hamilton tests/ --ignore tests/integrations
+            .ci/test.sh
 
   build-py38:
     docker:
       - image: circleci/python:3.8
-
+    environment:
+      TASK: tests
     steps:
       - checkout
       - run:
           name: install hamilton dependencies
           command: |
-            sudo apt install graphviz
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -r requirements-test.txt
-            pip install -r requirements.txt
-
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest --cov=hamilton tests/ --ignore tests/integrations
+            .ci/test.sh
 
   build-py39:
     docker:
       - image: circleci/python:3.9
-
+    environment:
+      TASK: tests
     steps:
       - checkout
       - run:
           name: install hamilton dependencies
           command: |
-            sudo apt install graphviz
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -r requirements-test.txt
-            pip install -r requirements.txt
-
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest --cov=hamilton tests/ --ignore tests/integrations
+            .ci/test.sh
 
   pre-commit:
     docker:
@@ -113,69 +82,48 @@ jobs:
   dask-py36:
     docker:
       - image: circleci/python:3.6
-
+    environment:
+      TASK: dask
     steps:
       - checkout
       - run:
           name: install hamilton dependencies + dask
           command: |
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -r requirements-test.txt
-            pip install -e ".[dask]"
-
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest graph_adapter_tests/h_dask
+            .ci/test.sh
   dask-py37:
     docker:
       - image: circleci/python:3.7
-
+    environment:
+      TASK: dask
     steps:
       - checkout
       - run:
           name: install hamilton dependencies + dask
           command: |
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -r requirements-test.txt
-            pip install -e ".[dask]"
-
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest graph_adapter_tests/h_dask
+            .ci/test.sh
   ray-py37:
     docker:
       - image: circleci/python:3.7
-
+    environment:
+      TASK: ray
     steps:
       - checkout
       - run:
           name: install hamilton dependencies + ray
           command: |
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -r requirements-test.txt
-            pip install -e ".[ray]"
-
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest graph_adapter_tests/h_ray
+            .ci/test.sh
   spark-py38:
     docker:
       - image: cimg/openjdk:14.0   # need java on it
@@ -205,104 +153,78 @@ jobs:
   integrations-py36:
     docker:
       - image: circleci/python:3.6
+    environment:
+      TASK: integrations
     steps:
       - checkout
       - run:
           name: install all python dependencies for integrations
           command: |
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -e .[pandera] # TODO -- add more as we add more integrations
-            pip install -r requirements-test.txt
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest tests/integrations
+            .ci/test.sh
   integrations-py37:
     docker:
       - image: circleci/python:3.7
+    environment:
+      TASK: integrations
     steps:
       - checkout
       - run:
           name: install all python dependencies for integrations
           command: |
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -e .[pandera] # TODO -- add more as we add more integrations
-            pip install -r requirements-test.txt
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest tests/integrations
+            .ci/test.sh
   integrations-py38:
     docker:
       - image: circleci/python:3.8
+    environment:
+      TASK: integrations
     steps:
       - checkout
       - run:
           name: install all python dependencies for integrations
           command: |
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -e .[pandera] # TODO -- add more as we add more integrations
-            pip install -r requirements-test.txt
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest tests/integrations
+            .ci/test.sh
   integrations-py39:
     docker:
       - image: circleci/python:3.9
+    environment:
+      TASK: integrations
     steps:
       - checkout
       - run:
           name: install all python dependencies for integrations
           command: |
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -e .[pandera] # TODO -- add more as we add more integrations
-            pip install -r requirements-test.txt
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest tests/integrations
+            .ci/test.sh
   asyncio-py39:
     docker:
       - image: circleci/python:3.9
+    environment:
+      TASK: async
     steps:
       - checkout
       - run:
           name: install hamilton dependencies + testing dependencies
           command: |
-            python -m venv venv || virtualenv venv
-            . venv/bin/activate
-            python --version
-            pip --version
-            pip install -e .
-            pip install -r graph_adapter_tests/h_async/requirements-test.txt
-
-      # run tests!
+            .ci/setup.sh
       - run:
           name: run tests
           command: |
-            . venv/bin/activate
-            python -m pytest graph_adapter_tests/h_async
+            .ci/test.sh
 workflows:
   version: 2
   unit-test-workflow:
