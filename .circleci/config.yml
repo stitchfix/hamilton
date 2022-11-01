@@ -76,4 +76,4 @@ workflows:
       - test:
           name: asyncio-py39
           python-version: '3.9'
-          task: asyncio
+          task: async
