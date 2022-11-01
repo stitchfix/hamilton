@@ -44,17 +44,13 @@ if [[ ${TASK} == "pyspark" ]]; then
 fi
 
 if [[ ${TASK} == "tests" ]]; then
-    pip install -e '.[ray]'
-    pytest graph_adapter_tests/h_ray
+    pip install .
+    pytest \
+        --cov=hamilton \
+        --ignore tests/integrations \
+        tests/
     exit 0
 fi
 
-pip install .
-
-pytest \
-    --cov=hamilton \
-    --ignore tests/integrations \
-    tests/ \
-|| exit 1
-
-echo "Done running tests"
+echo "ERROR: did not recognize TASK '${TASK}'"
+exit 1
