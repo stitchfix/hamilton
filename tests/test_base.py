@@ -147,6 +147,7 @@ def test_SimplePythonDataFrameGraphAdapter_check_input_type_mismatch(node_type, 
                 {"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13]), "c": pd.Series([0, 1, 2])}
             ),
         ),
+        ({"a": 1}, pd.DataFrame([{"a": 1}])),
     ],
     ids=[
         "test-single-series",
@@ -154,6 +155,7 @@ def test_SimplePythonDataFrameGraphAdapter_check_input_type_mismatch(node_type, 
         "test-multiple-series",
         "test-multiple-series-with-scalar",
         "test-multiple-series-with-index",
+        "test-single-value",
     ],
 )
 def test_PandasDataFrameResult_build_result(outputs, expected_result):
@@ -166,7 +168,6 @@ def test_PandasDataFrameResult_build_result(outputs, expected_result):
 @pytest.mark.parametrize(
     "outputs",
     [
-        ({"a": 1}),
         (
             {
                 "a": pd.DataFrame({"a": [1, 2, 3], "b": [11, 12, 13]}),
@@ -182,7 +183,6 @@ def test_PandasDataFrameResult_build_result(outputs, expected_result):
         ),
     ],
     ids=[
-        "test-single-value",
         "test-multiple-dataframes",
         "test-multiple-series-with-dataframe",
     ],

@@ -168,7 +168,8 @@ class PandasDataFrameResult(ResultMixin):
                 return value
             elif isinstance(value, pd.Series):
                 return pd.DataFrame(outputs)
-            raise ValueError(f"Cannot build result. Cannot handle type {value}.")
+            else:
+                return pd.DataFrame([outputs])
         return pd.DataFrame(outputs)
 
 
