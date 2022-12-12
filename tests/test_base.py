@@ -122,11 +122,13 @@ def test_SimplePythonDataFrameGraphAdapter_check_input_type_mismatch(node_type, 
 @pytest.mark.parametrize(
     "outputs,expected_result",
     [
+        ({"a": 1}, pd.DataFrame([{"a": 1}])),
         ({"a": pd.Series([1, 2, 3])}, pd.DataFrame({"a": pd.Series([1, 2, 3])})),
         (
             {"a": pd.DataFrame({"a": [1, 2, 3], "b": [11, 12, 13]})},
             pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13])}),
         ),
+        ({"a": 1, "bar": 2}, pd.DataFrame([{"a": 1, "bar": 2}])),
         (
             {"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13])},
             pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13])}),
@@ -147,15 +149,15 @@ def test_SimplePythonDataFrameGraphAdapter_check_input_type_mismatch(node_type, 
                 {"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13]), "c": pd.Series([0, 1, 2])}
             ),
         ),
-        ({"a": 1}, pd.DataFrame([{"a": 1}])),
     ],
     ids=[
+        "test-single-scalar",
         "test-single-series",
         "test-single-dataframe",
+        "test-multiple-scalars",
         "test-multiple-series",
         "test-multiple-series-with-scalar",
         "test-multiple-series-with-index",
-        "test-single-value",
     ],
 )
 def test_PandasDataFrameResult_build_result(outputs, expected_result):

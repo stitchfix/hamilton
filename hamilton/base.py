@@ -168,8 +168,12 @@ class PandasDataFrameResult(ResultMixin):
                 return value
             elif isinstance(value, pd.Series):
                 return pd.DataFrame(outputs)
-            else:
-                return pd.DataFrame([outputs])
+
+        if not any(isinstance(value, (pd.DataFrame, pd.Series)) for value in outputs.values()):
+            # If we're dealing with all scalar values,
+            # coerce the output to a single-row, multi-column dataframe.
+            return pd.DataFrame([outputs])
+
         return pd.DataFrame(outputs)
 
 
