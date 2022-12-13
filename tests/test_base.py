@@ -125,6 +125,16 @@ def _gen_ints(n: int) -> typing.Iterator[int]:
         yield i
 
 
+class _Foo:
+    """Dummy object used for testing."""
+
+    def __init__(self, name: str):
+        self.name = name
+
+    def __eq__(self, other: typing.Any) -> bool:
+        return isinstance(other, _Foo) and other.name == self.name
+
+
 @pytest.mark.parametrize(
     "outputs,expected_result",
     [
@@ -138,6 +148,7 @@ def _gen_ints(n: int) -> typing.Iterator[int]:
         ({"a": np.array([1, 2, 3])}, pd.DataFrame({"a": pd.Series([1, 2, 3])})),
         ({"a": {"b": 1, "c": "foo"}}, pd.DataFrame({"a": {"b": 1, "c": "foo"}})),
         ({"a": _gen_ints(3)}, pd.DataFrame({"a": pd.Series([0, 1, 2])})),
+        ({"a": _Foo("bar")}, pd.DataFrame([{"a": _Foo("bar")}])),
         ({"a": 1, "bar": 2}, pd.DataFrame([{"a": 1, "bar": 2}])),
         (
             {"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13])},
@@ -184,6 +195,12 @@ def _gen_ints(n: int) -> typing.Iterator[int]:
             pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 4, 4])}),
         ),
         (
+            {"a": {"foo": 1, "bar": 2}, "b": 4},
+            pd.DataFrame({"a": pd.Series([2, 1]), "b": pd.Series([4, 4])}).rename(
+                index=lambda i: ["bar", "foo"][i]
+            ),
+        ),
+        (
             {"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 5, 6])},
             pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 5, 6])}),
         ),
@@ -196,6 +213,7 @@ def _gen_ints(n: int) -> typing.Iterator[int]:
         "test-single-array",
         "test-single-dict",
         "test-single-generator",
+        "test-single-object",
         "test-multiple-scalars",
         "test-multiple-series",
         "test-multiple-series-with-scalar",
@@ -206,6 +224,7 @@ def _gen_ints(n: int) -> typing.Iterator[int]:
         "test-multiple-generators",
         "test-scalar-and-series",
         "test-scalar-and-list",
+        "test-scalar-and-dict",
         "test-series-and-list",
     ],
 )
