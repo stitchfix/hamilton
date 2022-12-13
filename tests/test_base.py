@@ -235,7 +235,6 @@ def test_PandasDataFrameResult_build_result(outputs, expected_result):
         ({"a": [1, 2], "b": {"foo": "bar"}}),
         ({"a": [1, 2], "b": [3, 4, 5]}),
         ({"a": np.array([1, 2]), "b": np.array([3, 4, 5])}),
-        ({"a": np.array([1, 2]), "b": np.array([[3, 4], [5, 6]])}),
         ({"a": _gen_ints(3), "b": _gen_ints(4)}),
     ],
     ids=[
@@ -244,7 +243,6 @@ def test_PandasDataFrameResult_build_result(outputs, expected_result):
         "test-lists-and-dicts",
         "test-mismatched-lists",
         "test-mismatched-arrays",
-        "test-mismatched-dicts",
         "test-mismatched-generators",
     ],
 )
