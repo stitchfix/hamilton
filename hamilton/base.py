@@ -169,7 +169,7 @@ class PandasDataFrameResult(ResultMixin):
             elif isinstance(value, pd.Series):
                 return pd.DataFrame(outputs)
 
-        if not any(isinstance(value, (pd.DataFrame, pd.Series)) for value in outputs.values()):
+        if not any(pd.api.types.is_list_like(value) for value in outputs.values()):
             # If we're dealing with all scalar values,
             # coerce the output to a single-row, multi-column dataframe.
             return pd.DataFrame([outputs])

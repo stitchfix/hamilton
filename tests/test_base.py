@@ -119,6 +119,12 @@ def test_SimplePythonDataFrameGraphAdapter_check_input_type_mismatch(node_type, 
     assert actual is False
 
 
+def _gen_ints(n: int) -> typing.Iterator[int]:
+    """Simple function to test that we can build results including generators."""
+    for i in range(n):
+        yield i
+
+
 @pytest.mark.parametrize(
     "outputs,expected_result",
     [
@@ -128,6 +134,10 @@ def test_SimplePythonDataFrameGraphAdapter_check_input_type_mismatch(node_type, 
             {"a": pd.DataFrame({"a": [1, 2, 3], "b": [11, 12, 13]})},
             pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13])}),
         ),
+        ({"a": [1, 2, 3]}, pd.DataFrame({"a": [1, 2, 3]})),
+        ({"a": np.array([1, 2, 3])}, pd.DataFrame({"a": pd.Series([1, 2, 3])})),
+        ({"a": {"b": 1, "c": "foo"}}, pd.DataFrame({"a": {"b": 1, "c": "foo"}})),
+        ({"a": _gen_ints(3)}, pd.DataFrame({"a": pd.Series([0, 1, 2])})),
         ({"a": 1, "bar": 2}, pd.DataFrame([{"a": 1, "bar": 2}])),
         (
             {"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13])},
@@ -149,15 +159,54 @@ def test_SimplePythonDataFrameGraphAdapter_check_input_type_mismatch(node_type, 
                 {"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13]), "c": pd.Series([0, 1, 2])}
             ),
         ),
+        (
+            {"a": [1, 2, 3], "b": [4, 5, 6]},
+            pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 5, 6])}),
+        ),
+        (
+            {"a": np.array([1, 2, 3]), "b": np.array([4, 5, 6])},
+            pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 5, 6])}),
+        ),
+        (
+            {"a": {"b": 1, "c": "foo"}, "d": {"b": 2}},
+            pd.DataFrame({"a": pd.Series({"b": 1, "c": "foo"}), "d": pd.Series({"b": 2})}),
+        ),
+        (
+            {"a": _gen_ints(3), "b": _gen_ints(3)},
+            pd.DataFrame({"a": pd.Series([0, 1, 2]), "b": pd.Series([0, 1, 2])}),
+        ),
+        (
+            {"a": pd.Series([1, 2, 3]), "b": 4},
+            pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 4, 4])}),
+        ),
+        (
+            {"a": [1, 2, 3], "b": 4},
+            pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 4, 4])}),
+        ),
+        (
+            {"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 5, 6])},
+            pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 5, 6])}),
+        ),
     ],
     ids=[
         "test-single-scalar",
         "test-single-series",
         "test-single-dataframe",
+        "test-single-list",
+        "test-single-array",
+        "test-single-dict",
+        "test-single-generator",
         "test-multiple-scalars",
         "test-multiple-series",
         "test-multiple-series-with-scalar",
         "test-multiple-series-with-index",
+        "test-multiple-lists",
+        "test-multiple-arrays",
+        "test-multiple-dicts",
+        "test-multiple-generators",
+        "test-scalar-and-series",
+        "test-scalar-and-list",
+        "test-series-and-list",
     ],
 )
 def test_PandasDataFrameResult_build_result(outputs, expected_result):
@@ -183,10 +232,20 @@ def test_PandasDataFrameResult_build_result(outputs, expected_result):
                 "c": pd.DataFrame({"d": [0, 0, 0]}),
             }
         ),
+        ({"a": [1, 2], "b": {"foo": "bar"}}),
+        ({"a": [1, 2], "b": [3, 4, 5]}),
+        ({"a": np.array([1, 2]), "b": np.array([3, 4, 5])}),
+        ({"a": np.array([1, 2]), "b": np.array([[3, 4], [5, 6]])}),
+        ({"a": _gen_ints(3), "b": _gen_ints(4)}),
     ],
     ids=[
         "test-multiple-dataframes",
         "test-multiple-series-with-dataframe",
+        "test-lists-and-dicts",
+        "test-mismatched-lists",
+        "test-mismatched-arrays",
+        "test-mismatched-dicts",
+        "test-mismatched-generators",
     ],
 )
 def test_PandasDataFrameResult_build_result_errors(outputs):
