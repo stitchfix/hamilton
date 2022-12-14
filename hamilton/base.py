@@ -133,8 +133,9 @@ class PandasDataFrameResult(ResultMixin):
             types_match = False
         elif number_with_indexes == 1 and no_index_length > 0:
             logger.warning(
-                f"WARNING: a single pandas index was found, but there are also {no_index_length} outputs without "
-                "an index. Please check whether the dataframe created matches what what you expect to happen."
+                f"WARNING: a single pandas index was found, but there are also {len(no_indexes['no-index'])} "
+                "outputs without an index. Please check whether the dataframe created matches what what you "
+                "expect to happen."
             )
             # Strictly speaking the index types match -- there is only one -- so setting to True.
             types_match = True
