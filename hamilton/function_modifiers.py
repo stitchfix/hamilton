@@ -431,8 +431,7 @@ class extract_columns(function_modifiers_base.NodeExpander):
         fn = node_.callable
         base_doc = node_.documentation
 
-        @functools.wraps(fn)
-        def df_generator(*args, **kwargs):
+        def df_generator(*args, **kwargs) -> pd.DataFrame:
             df_generated = fn(*args, **kwargs)
             if self.fill_with is not None:
                 for col in self.columns:
@@ -441,12 +440,8 @@ class extract_columns(function_modifiers_base.NodeExpander):
             return df_generated
 
         output_nodes = [
-            node.Node(
-                node_.name,
-                typ=pd.DataFrame,
-                doc_string=base_doc,
+            node_.copy_with(
                 callabl=df_generator,
-                tags=node_.tags.copy(),
             )
         ]
 
@@ -553,7 +548,6 @@ class extract_fields(function_modifiers_base.NodeExpander):
         fn = node_.callable
         base_doc = node_.documentation
 
-        @functools.wraps(fn)
         def dict_generator(*args, **kwargs):
             dict_generated = fn(*args, **kwargs)
             if self.fill_with is not None:
@@ -562,15 +556,7 @@ class extract_fields(function_modifiers_base.NodeExpander):
                         dict_generated[field] = self.fill_with
             return dict_generated
 
-        output_nodes = [
-            node.Node(
-                node_.name,
-                typ=dict,
-                doc_string=base_doc,
-                callabl=dict_generator,
-                tags=node_.tags.copy(),
-            )
-        ]
+        output_nodes = [node_.copy_with(callabl=dict_generator)]
 
         for field, field_type in self.fields.items():
             doc_string = base_doc  # default doc string of base function.
@@ -744,7 +730,7 @@ class does(function_modifiers_base.NodeCreator):
         and the same parameters/types as the original function.
         """
 
-        @functools.wraps(fn)
+        # @functools.wraps(fn)
         def wrapper_function(**kwargs):
             final_kwarg_values = {
                 key: param_spec.default
