@@ -121,8 +121,7 @@ def test_SimplePythonDataFrameGraphAdapter_check_input_type_mismatch(node_type, 
 
 def _gen_ints(n: int) -> typing.Iterator[int]:
     """Simple function to test that we can build results including generators."""
-    for i in range(n):
-        yield i
+    yield from range(n)
 
 
 class _Foo:
