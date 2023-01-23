@@ -4,18 +4,23 @@ import pandas as pd
 from pandas.core.groupby import generic
 from sklearn import preprocessing
 
-# this doesn't seem useful at all -- so skipping it
-# encoder = preprocessing.LabelEncoder()
-# data['id_encode'] = encoder.fit_transform(data['id'])
 from hamilton.function_modifiers import parameterize, source
 
 
 def _label_encoder(col: pd.Series) -> Tuple[preprocessing.LabelEncoder, pd.Series]:
+    """Creates an encoder, fits itself on the input, and then transforms the input.
+
+    :param col: the column to encode.
+    :return: tuple of fit encoder, and the encoded column.
+    """
     encoder = preprocessing.LabelEncoder()
     encoder = encoder.fit(col)
     return encoder, encoder.transform(col)
 
 
+# this doesn't seem useful at all -- so skipping it
+# encoder = preprocessing.LabelEncoder()
+# data['id_encode'] = encoder.fit_transform(data['id'])
 cols_to_encode = [
     "item_id",
     "dept_id",
@@ -32,11 +37,21 @@ mapping = {f"{name}_encoded": dict(column_to_encode=source(name)) for name in co
 
 @parameterize(**mapping)
 def label_encoder(column_to_encode: pd.Series) -> pd.Series:
+    """Creates a categorically encoded column from {column_to_encode}.
+
+    :param column_to_encode:
+    :return: encoded column
+    """
     _, encoded = _label_encoder(column_to_encode)
     return encoded
 
 
 def grouped_demand(demand: pd.Series) -> generic.SeriesGroupBy:
+    """Groups the demands column by id (i.e. the index).
+
+    :param demand:
+    :return:
+    """
     return demand.groupby(level=0)
 
 
@@ -104,8 +119,6 @@ def rolling_price_std_t7(grouped_sell_price: generic.SeriesGroupBy) -> pd.Series
 def rolling_price_std_t30(grouped_sell_price: generic.SeriesGroupBy) -> pd.Series:
     return grouped_sell_price.transform(lambda x: x.rolling(30).std())
 
-
-# data.drop(['rolling_price_max_t365', 'lag_price_t1'], inplace=True, axis=1)
 
 # time features
 def year(date: pd.Series) -> pd.Series:

@@ -1,3 +1,5 @@
+import logging
+import sys
 import time
 
 import data_loaders
@@ -7,6 +9,10 @@ import transforms
 
 from hamilton import driver
 
+logger = logging.getLogger(__name__)
+
+
+# this is hard coded here, but it could be passed in, or in some other versioned file.
 model_params = {
     "num_leaves": 555,
     "min_child_weight": 0.034,
@@ -27,6 +33,7 @@ model_params = {
 
 
 def main():
+    """The main function to orchestrate everything."""
     start_time = time.time()
     config = {
         "calendar_path": "m5-forecasting-accuracy/calendar.csv",
@@ -39,17 +46,18 @@ def main():
         "num_rows": 27500000,  # for training set
     }
     dr = driver.Driver(config, data_loaders, transforms, model_pipeline)
-    dr.visualize_execution(["predicted_df"], "./predicted_df.dot.png", {})
-    predicted_df: pd.DataFrame = dr.execute(["predicted_df"])
-    print(len(predicted_df))
-    print(predicted_df.head())
+    dr.display_all_functions("./all_functions.dot.png", {})
+    dr.visualize_execution(["kaggle_submission_df"], "./kaggle_submission_df.dot.png", {})
+    kaggle_submission_df: pd.DataFrame = dr.execute(["kaggle_submission_df"])
     duration = time.time() - start_time
-    predicted_df.to_csv("predicted_df.csv", index=False)
-    print("Duration: ", duration)
-    print(predicted_df.head())
+    logger.info(f"Duration: {duration}")
+    kaggle_submission_df.to_csv("kaggle_submission_df.csv", index=False)
+    logger.info(f"Shape of submission DF: {kaggle_submission_df.shape}")
+    logger.info(kaggle_submission_df.head())
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     main()
     # 275s to load data with ray
     # 173.4898989200592s to load data without ray

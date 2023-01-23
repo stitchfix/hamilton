@@ -14,5 +14,5 @@ you will need to log in to Kaggle to download the data.
 4. Run `run.py`. `python run.py`.
 
 # Notes
-Here's what this code creates:
-![predicted_df](predicted_df.dot.png)
+Here's what this code executes:
+![kaggle_submission_df](kaggle_submission_df.dot.png)
