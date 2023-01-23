@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from types import ModuleType
-from typing import Any, Callable, Collection, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Collection, Dict, List, Optional, Set, Tuple, Union
 
 import pandas as pd
 
@@ -203,14 +203,14 @@ class Driver(object):
 
     def execute(
         self,
-        final_vars: List[str],
+        final_vars: List[Union[str, Callable]],
         overrides: Dict[str, Any] = None,
         display_graph: bool = False,
         inputs: Dict[str, Any] = None,
     ) -> Any:
         """Executes computation.
 
-        :param final_vars: the final list of variables we want to compute.
+        :param final_vars: the final list of outputs we want to compute.
         :param overrides: values that will override "nodes" in the DAG.
         :param display_graph: DEPRECATED. Whether we want to display the graph being computed.
         :param inputs: Runtime inputs to the DAG.
@@ -226,8 +226,9 @@ class Driver(object):
         start_time = time.time()
         run_successful = True
         error = None
+        _final_vars = self._create_final_vars(final_vars)
         try:
-            outputs = self.raw_execute(final_vars, overrides, display_graph, inputs=inputs)
+            outputs = self.raw_execute(_final_vars, overrides, display_graph, inputs=inputs)
             result = self.adapter.build_result(**outputs)
             return result
         except Exception as e:
@@ -238,8 +239,19 @@ class Driver(object):
         finally:
             duration = time.time() - start_time
             self.capture_execute_telemetry(
-                error, final_vars, inputs, overrides, run_successful, duration
+                error, _final_vars, inputs, overrides, run_successful, duration
             )
+
+    def _create_final_vars(self, final_vars: List[Union[str, Callable]]) -> List[str]:
+        """Creates the final variables list - converting functions names as required.
+
+        :param final_vars:
+        :return: list of strings in the order that final_vars was provided.
+        """
+        _final_vars = [  # take name of function if a function is passed
+            f if isinstance(f, str) else f.__name__ for f in final_vars
+        ]
+        return _final_vars
 
     def capture_execute_telemetry(
         self,
@@ -370,7 +382,8 @@ class Driver(object):
             E.g. dict(graph_attr={'ratio': '1'}) will set the aspect ratio to be equal of the produced image.
             See https://graphviz.org/doc/info/attrs.html for options.
         """
-        nodes, user_nodes = self.graph.get_upstream_nodes(final_vars, inputs)
+        _final_vars = self._create_final_vars(final_vars)
+        nodes, user_nodes = self.graph.get_upstream_nodes(_final_vars, inputs)
         self.validate_inputs(user_nodes, inputs, nodes)
         try:
             self.graph.display(
@@ -390,8 +403,9 @@ class Driver(object):
         :param final_vars: the outputs we want to compute.
         :return: boolean True for cycles, False for no cycles.
         """
+        _final_vars = self._create_final_vars(final_vars)
         # get graph we'd be executing over
-        nodes, user_nodes = self.graph.get_upstream_nodes(final_vars)
+        nodes, user_nodes = self.graph.get_upstream_nodes(_final_vars)
         return self.graph.has_cycles(nodes, user_nodes)
 
     @capture_function_usage
