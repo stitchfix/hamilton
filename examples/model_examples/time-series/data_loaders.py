@@ -293,21 +293,17 @@ def base_training_data(
     base_dataset: pd.DataFrame,
     calendar: pd.DataFrame,
     sell_prices: pd.DataFrame,
-    num_rows: int = 55000000,
+    num_rows_to_skip: int = 55000000,
 ) -> pd.DataFrame:
     """Creates the base training data set.
 
     :param base_dataset:
     :param calendar:
     :param sell_prices:
-    :param num_rows: how many rows to use from the base dataset. If zero, or negative, use all rows.
+    :param num_rows_to_skip: how many rows to skip. If zero, or negative, use all rows.
     :return:
     """
-    # get only a sample for fst training
-    if num_rows > 0:
-        subset = base_dataset.loc[num_rows:]
-    else:
-        subset = base_dataset
+    subset = base_dataset.loc[num_rows_to_skip:]
     # notebook crash with the entire dataset (maybee use tensorflow, dask, pyspark xD)
     subset = pd.merge(subset, calendar, how="left", left_on=["day"], right_on=["d"])
     subset.drop(["d", "day"], inplace=True, axis=1)
