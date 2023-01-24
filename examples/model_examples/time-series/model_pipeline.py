@@ -67,6 +67,12 @@ def training_set(
 
 @extract_fields({"x": pd.DataFrame, "y": pd.Series, "test": pd.DataFrame})
 def data_sets(training_set: pd.DataFrame, cut_off_date: str = "2016-04-24") -> dict:
+    """This functions creates the X, y, and test sets from the initial training set.
+
+    :param training_set:
+    :param cut_off_date:
+    :return:
+    """
     training_set.sort_values("date", inplace=True)
     x = training_set[(training_set["date"] <= cut_off_date)]
     y = x["demand"]

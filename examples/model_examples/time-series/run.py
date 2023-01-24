@@ -46,8 +46,10 @@ def main():
         "num_rows_to_skip": 27500000,  # for training set
     }
     dr = driver.Driver(config, data_loaders, transforms, model_pipeline)
-    # dr.display_all_functions("./all_functions.dot.png", {})
-    dr.visualize_execution(["kaggle_submission_df"], "./kaggle_submission_df.dot.png", {})
+    dr.display_all_functions("./all_functions.dot", {"format": "png"})
+    dr.visualize_execution(
+        ["kaggle_submission_df"], "./kaggle_submission_df.dot", {"format": "png"}
+    )
     kaggle_submission_df: pd.DataFrame = dr.execute(["kaggle_submission_df"])
     duration = time.time() - start_time
     logger.info(f"Duration: {duration}")
