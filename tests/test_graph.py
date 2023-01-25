@@ -542,6 +542,9 @@ def test_function_graph_display_without_saving():
             defined_nodes.add(n)
     digraph = fg.display(defined_nodes, user_nodes, None)
     assert digraph is not None
+    import graphviz
+
+    assert isinstance(digraph, graphviz.Digraph)
 
 
 def test_create_graphviz_graph():
