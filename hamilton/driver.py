@@ -93,6 +93,7 @@ class Driver(object):
         if adapter is None:
             adapter = base.SimplePythonDataFrameGraphAdapter()
         error = None
+        self.graph_modules = modules
         try:
             self.graph = graph.FunctionGraph(*modules, config=config, adapter=adapter)
             self.adapter = adapter
@@ -248,9 +249,30 @@ class Driver(object):
         :param final_vars:
         :return: list of strings in the order that final_vars was provided.
         """
-        _final_vars = [  # take name of function if a function is passed
-            f if isinstance(f, str) else f.__name__ for f in final_vars
-        ]
+        _final_vars = []
+        errors = []
+        for final_var in final_vars:
+            if isinstance(final_var, str):
+                _final_vars.append(final_var)
+            elif isinstance(final_var, Callable):
+                match = False
+                for _module in self.graph_modules:
+                    if final_var.__module__ == _module.__name__:
+                        match = True
+                        break
+                if match:
+                    _final_vars.append(final_var.__name__)
+                else:
+                    errors.append(
+                        f"Function {final_var.__module__}.{final_var.__name__} is a function not in a "
+                        f"module given to the driver. Valid choices are {self.graph_modules}."
+                    )
+            else:
+                errors.append(f"Final var {final_var} is not a string or a function.")
+        if errors:
+            errors.sort()
+            error_str = f"{len(errors)} errors encountered:\n  " + "\n  ".join(errors)
+            raise ValueError(error_str)
         return _final_vars
 
     def capture_execute_telemetry(
