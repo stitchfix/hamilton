@@ -251,21 +251,17 @@ class Driver(object):
         """
         _final_vars = []
         errors = []
+        module_set = {_module.__name__ for _module in self.graph_modules}
         for final_var in final_vars:
             if isinstance(final_var, str):
                 _final_vars.append(final_var)
             elif isinstance(final_var, Callable):
-                match = False
-                for _module in self.graph_modules:
-                    if final_var.__module__ == _module.__name__:
-                        match = True
-                        break
-                if match:
+                if final_var.__module__ in module_set:
                     _final_vars.append(final_var.__name__)
                 else:
                     errors.append(
                         f"Function {final_var.__module__}.{final_var.__name__} is a function not in a "
-                        f"module given to the driver. Valid choices are {self.graph_modules}."
+                        f"module given to the driver. Valid choices are {module_set}."
                     )
             else:
                 errors.append(f"Final var {final_var} is not a string or a function.")
