@@ -27,7 +27,7 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
         self.modules = [] if modules is None else modules
         self.adapter = adapter
         self.final_vars = [] if final_vars is None else final_vars
-        self.overrides = overrides
+        self.overrides = {} if overrides is None else overrides
 
     def get_params(self):
         return {
