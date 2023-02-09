@@ -1,4 +1,6 @@
+from __future__ import annotations
 import importlib
+import logging
 from types import ModuleType
 from typing import Any, Dict, List
 
@@ -113,6 +115,7 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
         return self.fit(X, **fit_params).transform(X)
 
 
+logger = logging.getLogger(__name__)
 if __name__ == "__main__":
     log_setup.setup_logging()
 
@@ -140,7 +143,9 @@ if __name__ == "__main__":
 
     try:
         pd.testing.assert_frame_equal(sklearn_df, hamilton_df)
+        
     except ValueError as e:
+        logger.warning("Check 1 failed; `sklearn_df` and `hamilton_df` are unequal")
         raise e
 
     # Check 2: output of `vanilla driver > transformation` == `scikit-learn pipeline`
@@ -156,7 +161,9 @@ if __name__ == "__main__":
         assert isinstance(pipe_custom_then_sklearn, np.ndarray)
 
         np.testing.assert_equal(pipe_custom_then_sklearn, hamilton_then_sklearn)
+        
     except ValueError as e:
+        logger.warning("Check 2 failed; `pipe_custom_then_sklearn` and `hamilton_then_sklearn` are unequal")
         raise e
 
     # Check 3: output of `transformation > vanilla driver` == `scikit-learn pipeline`
@@ -178,4 +185,7 @@ if __name__ == "__main__":
 
         pd.testing.assert_frame_equal(pipe_sklearn_then_custom, sklearn_then_hamilton)
     except ValueError as e:
+        logger.warning("Check 3 failed; `pipe_sklearn_then_custom` and `sklearn_then_hamilton` are unequal")
         raise e
+
+    logger.info("All checks passed. `HamiltonTransformer` behaves properly")
