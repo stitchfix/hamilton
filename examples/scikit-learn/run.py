@@ -29,7 +29,11 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
         self.final_vars = [] if final_vars is None else final_vars
         self.overrides = {} if overrides is None else overrides
 
-    def get_params(self):
+    def get_params(self) -> dict:
+        """Get parameters for this estimator.
+
+        :return: Current parameters of the estimator
+        """
         return {
             "config": self.config,
             "modules": self.modules,
@@ -38,26 +42,49 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
             "overrides": self.overrides,
         }
 
-    def set_params(self, **parameters):
+    def set_params(self, **parameters) -> HamiltonTransformer:
+        """Get parameters for this estimator.
+        
+        :param parameters: Estimator parameters.
+        :return: self
+        """
         for parameter, value in parameters.items():
             setattr(self, parameter, value)
         return self
 
     def get_features_names_out(self):
+        """"""
         if self.feature_names_out_:
             return self.feature_names_out_
 
-    def _get_tags(self):
+    def _get_tags(self) -> dict:
+        """Get scikit-learn compatible estimator tags for introspection
+
+        ref: https://scikit-learn.org/stable/developers/develop.html#estimator-tags
+        """
         return {"requires_fit": False, "requires_y": False}
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None) -> HamiltonTransformer:
+        """Instantiate Hamilton driver.Driver object
+
+        :param X: Input 2D array
+        :return: self
+        """
+
         check_array(X, accept_sparse=True)
         self.driver_ = driver.Driver(self.config, *self.modules, adapter=self.adapter)
-        self.n_features_in_ = X.shape[1]
+        self.n_features_in_: int = X.shape[1]
 
         return self
 
-    def transform(self, X, y=None, **kwargs):
+    def transform(self, X, y=None, **kwargs) -> pd.DataFrame:
+        """Execute Hamilton Driver on X with optional parameters fit_params and returns a 
+        transformed version of X. Requires prior call to .fit() to instantiate Hamilton Driver
+        
+        :param X: Input 2D array
+        :return: Hamilton Driver output 2D array
+        """
+
         check_is_fitted(self, "n_features_in_")
 
         if isinstance(X, pd.DataFrame):
@@ -73,7 +100,13 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
         self.feature_names_out_ = X_t.columns.to_list()
         return X_t
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, **fit_params) -> pd.DataFrame:
+        """Execute Hamilton Driver on X with optional parameters fit_params and returns a 
+        transformed version of X.
+
+        :param X: Input 2D array
+        :return: Hamilton Driver output 2D array
+        """
         return self.fit(X, **fit_params).transform(X)
 
 
