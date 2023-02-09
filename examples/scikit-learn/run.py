@@ -62,7 +62,10 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
 
         ref: https://scikit-learn.org/stable/developers/develop.html#estimator-tags
         """
-        return {"requires_fit": False, "requires_y": False}
+        return {
+            "requires_fit": True,
+            "requires_y": False
+        }
 
     def fit(self, X, y=None) -> HamiltonTransformer:
         """Instantiate Hamilton driver.Driver object
