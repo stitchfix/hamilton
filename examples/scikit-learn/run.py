@@ -24,13 +24,11 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
         modules: List[ModuleType] = None,
         adapter: base.HamiltonGraphAdapter = None,
         final_vars: List[str] = None,
-        overrides: Dict[str, Any] = None,
     ):
         self.config = {} if config is None else config
         self.modules = [] if modules is None else modules
         self.adapter = adapter
         self.final_vars = [] if final_vars is None else final_vars
-        self.overrides = {} if overrides is None else overrides
 
     def get_params(self) -> dict:
         """Get parameters for this estimator.
@@ -42,12 +40,11 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
             "modules": self.modules,
             "adapter": self.adapter,
             "final_vars": self.final_vars,
-            "overrides": self.overrides,
         }
 
     def set_params(self, **parameters) -> HamiltonTransformer:
         """Get parameters for this estimator.
-        
+
         :param parameters: Estimator parameters.
         :return: self
         """
@@ -65,28 +62,28 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
 
         ref: https://scikit-learn.org/stable/developers/develop.html#estimator-tags
         """
-        return {
-            "requires_fit": True,
-            "requires_y": False
-        }
+        return {"requires_fit": True, "requires_y": False}
 
-    def fit(self, X, y=None) -> HamiltonTransformer:
+    def fit(self, X, y=None, overrides: Dict[str, Any] = None) -> HamiltonTransformer:
         """Instantiate Hamilton driver.Driver object
 
         :param X: Input 2D array
+        :param overrides: dictionary of override values passed to driver.execute() during .transform()
         :return: self
         """
 
         check_array(X, accept_sparse=True)
+        self.overrides_ = {} if overrides is None else overrides
+
         self.driver_ = driver.Driver(self.config, *self.modules, adapter=self.adapter)
         self.n_features_in_: int = X.shape[1]
 
         return self
 
     def transform(self, X, y=None, **kwargs) -> pd.DataFrame:
-        """Execute Hamilton Driver on X with optional parameters fit_params and returns a 
+        """Execute Hamilton Driver on X with optional parameters fit_params and returns a
         transformed version of X. Requires prior call to .fit() to instantiate Hamilton Driver
-        
+
         :param X: Input 2D array
         :return: Hamilton Driver output 2D array
         """
@@ -100,14 +97,14 @@ class HamiltonTransformer(BaseEstimator, TransformerMixin):
 
             X = X.to_dict(orient="series")
 
-        X_t = self.driver_.execute(final_vars=self.final_vars, overrides=self.overrides, inputs=X)
+        X_t = self.driver_.execute(final_vars=self.final_vars, overrides=self.overrides_, inputs=X)
 
         self.n_features_out_ = len(self.final_vars)
         self.feature_names_out_ = X_t.columns.to_list()
         return X_t
 
     def fit_transform(self, X, y=None, **fit_params) -> pd.DataFrame:
-        """Execute Hamilton Driver on X with optional parameters fit_params and returns a 
+        """Execute Hamilton Driver on X with optional parameters fit_params and returns a
         transformed version of X.
 
         :param X: Input 2D array
@@ -144,7 +141,7 @@ if __name__ == "__main__":
 
     try:
         pd.testing.assert_frame_equal(sklearn_df, hamilton_df)
-        
+
     except ValueError as e:
         logger.warning("Check 1 failed; `sklearn_df` and `hamilton_df` are unequal")
         raise e
@@ -162,9 +159,11 @@ if __name__ == "__main__":
         assert isinstance(pipe_custom_then_sklearn, np.ndarray)
 
         np.testing.assert_equal(pipe_custom_then_sklearn, hamilton_then_sklearn)
-        
+
     except ValueError as e:
-        logger.warning("Check 2 failed; `pipe_custom_then_sklearn` and `hamilton_then_sklearn` are unequal")
+        logger.warning(
+            "Check 2 failed; `pipe_custom_then_sklearn` and `hamilton_then_sklearn` are unequal"
+        )
         raise e
 
     # Check 3: output of `transformation > vanilla driver` == `scikit-learn pipeline`
@@ -186,7 +185,9 @@ if __name__ == "__main__":
 
         pd.testing.assert_frame_equal(pipe_sklearn_then_custom, sklearn_then_hamilton)
     except ValueError as e:
-        logger.warning("Check 3 failed; `pipe_sklearn_then_custom` and `sklearn_then_hamilton` are unequal")
+        logger.warning(
+            "Check 3 failed; `pipe_sklearn_then_custom` and `sklearn_then_hamilton` are unequal"
+        )
         raise e
 
     logger.info("All checks passed. `HamiltonTransformer` behaves properly")
