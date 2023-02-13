@@ -39,12 +39,14 @@ This page curates talks, podcasts, and blogs about Hamilton
      - 30 minute talk about Hamilton, it's origin, tips on using it, and some exciting extensions & plans - `Youtube <https://www.youtube.com/watch?v=CHfrT5OVjlM>`_. For slides, see below.
    * - October 2022
      - Functions & DAGs: introducing Hamilton, a microframework for dataframe generation
-     - Blog post on Hamilton origins. `https://multithreaded.stitchfix.com/blog/2021/10/14/functions-dags-hamilton/ <https://multithreaded.stitchfix.com/blog/2021/10/14/functions-dags-hamilton/>`_
+     - Blog post on Hamilton origins. `Blog post <https://multithreaded.stitchfix.com/blog/2021/10/14/functions-dags-hamilton/>`_
    * - April 2021
      - Hamilton: a Micro Framework for Creating Dataframes @ applyconf
-     - 10 minute lightning talk on Hamilton `https://www.youtube.com/watch?v=B5Zp\_30Knoo <https://www.youtube.com/watch?v=B5Zp\_30Knoo>`_
+     - 10 minute lightning talk on Hamilton `Youtube video <https://www.youtube.com/watch?v=B5Zp\_30Knoo/>`_
 
 Slides
 ------
 
 :download:`Public ApplyConf2022 - [Open Source] Hamilton, a micro framework for creating dataframes, and its application at Stitch Fix <_static/ApplyConf2022.pdf>`
+
+

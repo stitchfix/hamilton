@@ -151,7 +151,7 @@ been very stable (hasn’t changed since launch), but to feel good about making 
 think.
 #. We don’t expose all the functionality of Ray, but we could. E.g. memory aware scheduling, or specifying resources for
 specific functions. Let us know if you want something exposed — create an issue on github please — 
-`https://github.com/stitchfix/hamilton <https://github.com/stitchfix/hamilton>`_.
+`stitchfix/hamilton <https://github.com/stitchfix/hamilton/>`_.
 
 To conclude
 -----------
