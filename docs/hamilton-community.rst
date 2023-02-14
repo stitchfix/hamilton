@@ -6,7 +6,7 @@ If you want to bounce ideas, ask questions, or just see what the small community
 
 We have a bunch of channels on Slack that are designed to help you get the most out of Hamilton!
 
-Slack space name: `slack community <https://hamilton-opensource.slack.com/>`_
+Slack space name: `hamilton-opensource <https://hamilton-opensource.slack.com>`_
 
-Slack invite link: `slack link <https://join.slack.com/t/hamilton-opensource/shared\_invite/zt-1bjs72asx-wcUTgH7q7QX1igiQ5bbdcg/>`_
+Slack invite link: `click me to join <https://join.slack.com/t/hamilton-opensource/shared\_invite/zt-1bjs72asx-wcUTgH7q7QX1igiQ5bbdcg>`_
 See you there!
