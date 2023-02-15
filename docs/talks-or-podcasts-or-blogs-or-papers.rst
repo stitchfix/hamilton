@@ -48,5 +48,3 @@ Slides
 ------
 
 :download:`Public ApplyConf2022 - [Open Source] Hamilton, a micro framework for creating dataframes, and its application at Stitch Fix <_static/ApplyConf2022.pdf>`
-
-

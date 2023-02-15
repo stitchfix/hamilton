@@ -90,7 +90,7 @@ Single Machine:
 `Dask <https://dask.org>`_ is a very easy way to enable multi-processing on a single machine. This enables you to
 easily make use of multiple CPU cores.
 
-What this doesn't help with is data scale, as you're still limited to what fits in memory on your machine 
+What this doesn't help with is data scale, as you're still limited to what fits in memory on your machine
 Distributed Computation:
 ************************
 
