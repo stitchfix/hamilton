@@ -169,45 +169,63 @@ class PandasDataFrameResult(ResultMixin):
             # If we're dealing with all values that don't have any "index" that could be created
             # (i.e. scalars, objects) coerce the output to a single-row, multi-column dataframe.
             return pd.DataFrame([outputs])
-        # build the dataframe from the outputs
-        return PandasDataFrameResult.build_dataframe(outputs)
+        #
+        contains_df = any(isinstance(value, pd.DataFrame) for value in outputs.values())
+        if contains_df:
+            # build the dataframe from the outputs
+            return PandasDataFrameResult.build_dataframe_with_dataframes(outputs)
+        # don't do anything special if dataframes aren't in the output.
+        return pd.DataFrame(outputs)  # this does an implicit outer join based on index.
 
     @staticmethod
-    def build_dataframe(outputs: Dict[str, Any]) -> pd.DataFrame:
-        """Builds a dataframe from the outputs, concatenating dataframes and series column wise.
+    def build_dataframe_with_dataframes(outputs: Dict[str, Any]) -> pd.DataFrame:
+        """Builds a dataframe from the outputs in an "outer join" manner based on index.
 
-        We add logic to one by one build the dataframe from its constitutent parts.
-        This might be slower -- but ensures that we can concatenate column wise dataframes,
-        and series together.
+        The behavior of pd.Dataframe(outputs) is that it will do an outer join based on indexes of the Series passed in.
+        To handle dataframes, we unpack the dataframe into a dict of series, check to ensure that no columns are
+        redefined in a rolling fashion going in order of the outputs requested. This then results in an "enlarged"
+        outputs dict that is then passed to pd.Dataframe(outputs) to get the final dataframe.
+
+        :param outputs: The outputs to build the dataframe from.
+        :return: A dataframe with the outputs.
         """
-        _df = None
-        _scalars = []
-        _column_order = []
+        flattened_outputs = {}
+        outputs_present = set()
         for name, output in outputs.items():
             if isinstance(output, pd.DataFrame):
-                _column_order += list(output.columns)
-                if _df is None:
-                    _df = output
-                else:
-                    # need to concat to ensure we do outer join
-                    _df = pd.concat([_df, output], axis=1)
+                df_columns = set(output.columns)
+                column_intersection = outputs_present.intersection(df_columns)
+                if column_intersection:
+                    raise ValueError(
+                        f"Dataframe {name} contains columns {column_intersection} that already exist in the output. "
+                        f"Please rename the columns in {name} to avoid this error."
+                    )
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(
+                        f"Unpacking dataframe {name} into dict of series with columns {df_columns}."
+                    )
+                df_dict = output.to_dict(orient="series")
+                flattened_outputs.update(df_dict)
+                outputs_present = outputs_present.union(df_columns)
             elif isinstance(output, pd.Series):
-                _column_order.append(name)
-                if _df is None:
-                    _df = pd.DataFrame({name: output})
-                else:
-                    # need to concat to ensure we do outer join
-                    _df = pd.concat([_df, pd.Series(output, name=name)], axis=1)
+                if name in flattened_outputs:
+                    raise ValueError(
+                        f"Series {name} already exists in the output. "
+                        f"Please rename the series to avoid this error, or determine from where the initial series is "
+                        f"being added; it may be coming from a dataframe that is being unpacked."
+                    )
+                outputs_present.add(name)
+                flattened_outputs[name] = output
             else:
-                _column_order.append(name)
-                _scalars.append((name, output))
-        if _df is None:
-            _df = pd.DataFrame(outputs)
-        else:
-            for _name, _scalar in _scalars:
-                _df[_name] = _scalar
-            _df = _df[_column_order]
-        return _df
+                if name in flattened_outputs:
+                    raise ValueError(
+                        f"Non series output {name} already exists in the output. "
+                        f"Please rename this output to avoid this error, or determine from where the initial value is "
+                        f"being added; it may be coming from a dataframe that is being unpacked."
+                    )
+                outputs_present.add(name)
+                flattened_outputs[name] = output
+        return pd.DataFrame(flattened_outputs)
 
 
 class StrictIndexTypePandasDataFrameResult(PandasDataFrameResult):
