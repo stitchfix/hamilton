@@ -45,7 +45,9 @@ class tag(base.NodeDecorator):
         "module",
     ]  # Anything that starts with any of these is banned, the framework reserves the right to manage it
 
-    def __init__(self, *, target_: base.TargetType = None, **tags: str):
+    def __init__(
+        self, *, target_: base.TargetType = None, is_internal_user_: bool = False, **tags: str
+    ):
         """Constructor for adding tag annotations to a function.
 
         :param target_: Target nodes to decorate. This can be one of:
@@ -54,11 +56,13 @@ class tag(base.NodeDecorator):
         -> Ellipsis (...) tag *all* nodes outputted by this
         -> Collection[str] tag *only* the nodes with the specified names
         -> str: tag *only* the node with the specified name
+        :param internal_user: Whether this is an internal user. If so, we will not validate the tags as strictly.
         :param tags: the keys are always going to be strings, so the type annotation here means the values are strings.
             Implicitly this is `Dict[str, str]` but the PEP guideline is to only annotate it with `str`.
         """
         super(tag, self).__init__(target=target_)
         self.tags = tags
+        self.internal_user = is_internal_user_
 
     def decorate_node(self, node_: node.Node) -> node.Node:
         """Decorates the nodes produced by this with the specified tags
@@ -71,7 +75,7 @@ class tag(base.NodeDecorator):
         return node_.copy_with(tags=node_tags)
 
     @staticmethod
-    def _key_allowed(key: str) -> bool:
+    def _key_allowed(key: str, is_internal_user: bool) -> bool:
         """Validates that a tag key is allowed. Rules are:
         1. It must not be empty
         2. It can have dots, which specify a hierarchy of order
@@ -87,20 +91,23 @@ class tag(base.NodeDecorator):
             return False
         if key_components[0] in tag.RESERVED_TAG_NAMESPACES:
             # Reserved prefixes
-            return False
+            if not is_internal_user:
+                return False
         for key in key_components:
             if not key.isidentifier():
                 return False
         return True
 
     @staticmethod
-    def _value_allowed(value: Any) -> bool:
+    def _value_allowed(value: Any, is_internal_user: bool) -> bool:
         """Validates that a tag value is allowed. Rules are only that it must be a string.
 
         :param value: Value to validate
+        :param is_internal_user: Whether this is an internal user. Internal users can
+        utilize non-string values.
         :return: True if it is valid, False otherwise
         """
-        if not isinstance(value, str):
+        if (not isinstance(value, str)) and (not is_internal_user):
             return False
         return True
 
@@ -112,7 +119,9 @@ class tag(base.NodeDecorator):
         """
         bad_tags = set()
         for key, value in self.tags.items():
-            if (not tag._key_allowed(key)) or (not tag._value_allowed(value)):
+            if (not tag._key_allowed(key, self.internal_user)) or (
+                not tag._value_allowed(value, self.internal_user)
+            ):
                 bad_tags.add((key, value))
         if bad_tags:
             bad_tags_formatted = ",".join([f"{key}={value}" for key, value in bad_tags])

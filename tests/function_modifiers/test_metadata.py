@@ -26,7 +26,15 @@ def test_tags():
     ],
 )
 def test_tags_invalid_key(key):
-    assert not function_modifiers.tag._key_allowed(key)
+    assert not function_modifiers.tag._key_allowed(key, False)
+
+
+@pytest.mark.parametrize(
+    "key",
+    ["hamilton", "hamilton.foo"],  # Reserved key  # Reserved key
+)
+def test_tags_valid_key_internal_user(key):
+    assert function_modifiers.tag._key_allowed(key, True)
 
 
 @pytest.mark.parametrize(
@@ -38,12 +46,17 @@ def test_tags_invalid_key(key):
     ],
 )
 def test_tags_valid_key(key):
-    assert function_modifiers.tag._key_allowed(key)
+    assert function_modifiers.tag._key_allowed(key, False)
 
 
 @pytest.mark.parametrize("value", [None, False, [], ["foo", "bar"]])
 def test_tags_invalid_value(value):
-    assert not function_modifiers.tag._value_allowed(value)
+    assert not function_modifiers.tag._value_allowed(value, False)
+
+
+@pytest.mark.parametrize("value", [None, False, [], ["foo", "bar"]])
+def test_tags_valid_value_internal_user(value):
+    assert function_modifiers.tag._value_allowed(value, True)
 
 
 def test_tag_outputs():
