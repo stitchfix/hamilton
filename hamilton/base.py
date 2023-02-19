@@ -169,8 +169,45 @@ class PandasDataFrameResult(ResultMixin):
             # If we're dealing with all values that don't have any "index" that could be created
             # (i.e. scalars, objects) coerce the output to a single-row, multi-column dataframe.
             return pd.DataFrame([outputs])
+        # build the dataframe from the outputs
+        return PandasDataFrameResult.build_dataframe(outputs)
 
-        return pd.DataFrame(outputs)
+    @staticmethod
+    def build_dataframe(outputs: Dict[str, Any]) -> pd.DataFrame:
+        """Builds a dataframe from the outputs, concatenating dataframes and series column wise.
+
+        We add logic to one by one build the dataframe from its constitutent parts.
+        This might be slower -- but ensures that we can concatenate column wise dataframes,
+        and series together.
+        """
+        _df = None
+        _scalars = []
+        _column_order = []
+        for name, output in outputs.items():
+            if isinstance(output, pd.DataFrame):
+                _column_order += list(output.columns)
+                if _df is None:
+                    _df = output
+                else:
+                    # need to concat to ensure we do outer join
+                    _df = pd.concat([_df, output], axis=1)
+            elif isinstance(output, pd.Series):
+                _column_order.append(name)
+                if _df is None:
+                    _df = pd.DataFrame({name: output})
+                else:
+                    # need to concat to ensure we do outer join
+                    _df = pd.concat([_df, pd.Series(output, name=name)], axis=1)
+            else:
+                _column_order.append(name)
+                _scalars.append((name, output))
+        if _df is None:
+            _df = pd.DataFrame(outputs)
+        else:
+            for _name, _scalar in _scalars:
+                _df[_name] = _scalar
+            _df = _df[_column_order]
+        return _df
 
 
 class StrictIndexTypePandasDataFrameResult(PandasDataFrameResult):

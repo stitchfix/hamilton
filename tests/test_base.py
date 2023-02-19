@@ -203,6 +203,21 @@ class _Foo:
             {"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 5, 6])},
             pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([4, 5, 6])}),
         ),
+        (
+            {
+                "a": pd.DataFrame({"a": [1, 2, 3], "b": [11, 12, 13]}),
+                "b": pd.DataFrame({"c": [1, 3, 5], "d": [14, 15, 16]}),
+            },
+            pd.DataFrame({"a": [1, 2, 3], "b": [11, 12, 13], "c": [1, 3, 5], "d": [14, 15, 16]}),
+        ),
+        (
+            {
+                "a": pd.Series([1, 2, 3]),
+                "b": pd.Series([11, 12, 13]),
+                "c": pd.DataFrame({"d": [0, 0, 0]}),
+            },
+            pd.DataFrame({"a": pd.Series([1, 2, 3]), "b": pd.Series([11, 12, 13]), "d": [0, 0, 0]}),
+        ),
     ],
     ids=[
         "test-single-scalar",
@@ -225,6 +240,8 @@ class _Foo:
         "test-scalar-and-list",
         "test-scalar-and-dict",
         "test-series-and-list",
+        "test-multiple-dataframes",
+        "test-multiple-series-with-dataframe",
     ],
 )
 def test_PandasDataFrameResult_build_result(outputs, expected_result):
@@ -237,27 +254,12 @@ def test_PandasDataFrameResult_build_result(outputs, expected_result):
 @pytest.mark.parametrize(
     "outputs",
     [
-        (
-            {
-                "a": pd.DataFrame({"a": [1, 2, 3], "b": [11, 12, 13]}),
-                "b": pd.DataFrame({"c": [1, 3, 5], "d": [14, 15, 16]}),
-            }
-        ),
-        (
-            {
-                "a": pd.Series([1, 2, 3]),
-                "b": pd.Series([11, 12, 13]),
-                "c": pd.DataFrame({"d": [0, 0, 0]}),
-            }
-        ),
         ({"a": [1, 2], "b": {"foo": "bar"}}),
         ({"a": [1, 2], "b": [3, 4, 5]}),
         ({"a": np.array([1, 2]), "b": np.array([3, 4, 5])}),
         ({"a": _gen_ints(3), "b": _gen_ints(4)}),
     ],
     ids=[
-        "test-multiple-dataframes",
-        "test-multiple-series-with-dataframe",
         "test-lists-and-dicts",
         "test-mismatched-lists",
         "test-mismatched-arrays",
