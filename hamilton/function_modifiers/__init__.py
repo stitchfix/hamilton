@@ -1,6 +1,16 @@
 import logging
 
-from . import base, configuration, dependencies, expanders, macros, metadata, recursive, validation
+from . import (
+    base,
+    caching,
+    configuration,
+    dependencies,
+    expanders,
+    macros,
+    metadata,
+    recursive,
+    validation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -63,5 +73,7 @@ IS_DATA_VALIDATOR_TAG = validation.IS_DATA_VALIDATOR_TAG
 DATA_VALIDATOR_ORIGINAL_OUTPUT_TAG = validation.DATA_VALIDATOR_ORIGINAL_OUTPUT_TAG
 
 # recursive/subdag operators
-
 subdag = recursive.subdag
+
+# caching
+checkpoint = caching.checkpoint

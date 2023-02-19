@@ -13,6 +13,9 @@ from typing import Any, Callable, Collection, Dict, List, Optional, Set, Tuple, 
 
 import pandas as pd
 
+from hamilton.storage import caching
+from hamilton.storage.caching import Cache
+
 SLACK_ERROR_MESSAGE = (
     "-------------------------------------------------------------------\n"
     "Oh no an error! Need help with Hamilton?\n"
@@ -79,7 +82,7 @@ class Driver(object):
         self,
         config: Dict[str, Any],
         *modules: ModuleType,
-        adapter: base.HamiltonGraphAdapter = None,
+        adapter: Optional[base.HamiltonGraphAdapter] = None,
     ):
         """Constructor: creates a DAG given the configuration & modules to crawl.
 
@@ -202,12 +205,26 @@ class Driver(object):
             error_str = f"{len(errors)} errors encountered:\n  " + "\n  ".join(errors)
             raise ValueError(error_str)
 
+    def _get_overrides_with_cache(self, overrides: Optional[Dict[str, Any]], cache: Cache):
+        if overrides is None:
+            overrides = {}
+        overrides_from_cache = cache.retrieve_cache(self.graph)
+        for override_key, override_value in overrides.items():
+            if override_key in overrides_from_cache:
+                raise ValueError(
+                    f"Override key {override_key} exists in cache -- this conflicts "
+                    f"with the override you passed in. Either ignore using the filterlist param, "
+                    f"unmark with `@checkpoint`, or remove from overrides"
+                )
+        return {**overrides_from_cache, **overrides}
+
     def execute(
         self,
         final_vars: List[Union[str, Callable]],
         overrides: Dict[str, Any] = None,
         display_graph: bool = False,
         inputs: Dict[str, Any] = None,
+        cache: Optional[Cache] = None,
     ) -> Any:
         """Executes computation.
 
@@ -215,6 +232,7 @@ class Driver(object):
         :param overrides: values that will override "nodes" in the DAG.
         :param display_graph: DEPRECATED. Whether we want to display the graph being computed.
         :param inputs: Runtime inputs to the DAG.
+        :param cache: Cache object to use for caching.
         :return: an object consisting of the variables requested, matching the type returned by the GraphAdapter.
             See constructor for how the GraphAdapter is initialized. The default one right now returns a pandas
             dataframe.
@@ -229,7 +247,9 @@ class Driver(object):
         error = None
         _final_vars = self._create_final_vars(final_vars)
         try:
-            outputs = self.raw_execute(_final_vars, overrides, display_graph, inputs=inputs)
+            outputs = self.raw_execute(
+                _final_vars, overrides, display_graph, inputs=inputs, cache=cache
+            )
             result = self.adapter.build_result(**outputs)
             return result
         except Exception as e:
@@ -316,6 +336,7 @@ class Driver(object):
         overrides: Dict[str, Any] = None,
         display_graph: bool = False,
         inputs: Dict[str, Any] = None,
+        cache: Optional[Cache] = None,
     ) -> Dict[str, Any]:
         """Raw execute function that does the meat of execute.
 
@@ -324,10 +345,13 @@ class Driver(object):
 
         :param final_vars: Final variables to compute
         :param overrides: Overrides to run.
-        :param display_graph: DEPRECATED. DO NOT USE. Whether or not to display the graph when running it
+        :param display_graph: DEPRECATED. DO NOT USE. Whether to display the graph when running it
         :param inputs: Runtime inputs to the DAG
-        :return:
+        :param cache: Cache object to use for storage/retrieval
+        :return: A dictionary of the results of final_vars.
         """
+        if cache is None:
+            cache = caching.NoOpCache()
         nodes, user_nodes = self.graph.get_upstream_nodes(final_vars, inputs)
         self.validate_inputs(
             user_nodes, inputs, nodes
@@ -340,12 +364,25 @@ class Driver(object):
             self.visualize_execution(final_vars, "test-output/execute.gv", {"view": True})
             if self.has_cycles(final_vars):  # here for backwards compatible driver behavior.
                 raise ValueError("Error: cycles detected in you graph.")
+        loaded_overrides = self._get_overrides_with_cache(overrides, cache)
         memoized_computation = dict()  # memoized storage
-        self.graph.execute(nodes, memoized_computation, overrides, inputs)
+
+        def sync_cache(_memoized_computation=memoized_computation):
+            cache_to_save = {
+                self.graph.nodes[key]: value for key, value in _memoized_computation.items()
+            }
+            cache.save_bulk(cache_to_save)
+
+        try:
+            self.graph.execute(nodes, memoized_computation, loaded_overrides, inputs)
+        except Exception:
+            sync_cache(memoized_computation)
+            raise
+        sync_cache(memoized_computation)
         outputs = {
             c: memoized_computation[c] for c in final_vars
         }  # only want request variables in df.
-        del memoized_computation  # trying to cleanup some memory
+        del memoized_computation  # trying to clean up some memory
         return outputs
 
     @capture_function_usage
