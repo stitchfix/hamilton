@@ -190,11 +190,12 @@ class PandasDataFrameResult(ResultMixin):
         :return: A dataframe with the outputs.
         """
         flattened_outputs = {}
-        outputs_present = set()
         for name, output in outputs.items():
             if isinstance(output, pd.DataFrame):
-                df_columns = set(output.columns)
-                column_intersection = outputs_present.intersection(df_columns)
+                df_columns = list(output.columns)
+                column_intersection = [
+                    column for column in df_columns if column in flattened_outputs
+                ]
                 if column_intersection:
                     raise ValueError(
                         f"Dataframe {name} contains columns {column_intersection} that already exist in the output. "
@@ -206,7 +207,6 @@ class PandasDataFrameResult(ResultMixin):
                     )
                 df_dict = output.to_dict(orient="series")
                 flattened_outputs.update(df_dict)
-                outputs_present = outputs_present.union(df_columns)
             elif isinstance(output, pd.Series):
                 if name in flattened_outputs:
                     raise ValueError(
@@ -214,7 +214,6 @@ class PandasDataFrameResult(ResultMixin):
                         f"Please rename the series to avoid this error, or determine from where the initial series is "
                         f"being added; it may be coming from a dataframe that is being unpacked."
                     )
-                outputs_present.add(name)
                 flattened_outputs[name] = output
             else:
                 if name in flattened_outputs:
@@ -223,7 +222,6 @@ class PandasDataFrameResult(ResultMixin):
                         f"Please rename this output to avoid this error, or determine from where the initial value is "
                         f"being added; it may be coming from a dataframe that is being unpacked."
                     )
-                outputs_present.add(name)
                 flattened_outputs[name] = output
         return pd.DataFrame(flattened_outputs)
 
