@@ -205,6 +205,16 @@ class PandasDataFrameResult(ResultMixin):
                     logger.debug(
                         f"Unpacking dataframe {name} into dict of series with columns {df_columns}."
                     )
+                name_prefix = f'{name.split("_")[0]}_'
+                if any([column for column in df_columns if not column.startswith(name_prefix)]):
+                    # adding this here to try to force some consistency in the naming of columns and mapping it to the
+                    # originating function.
+                    logger.warning(
+                        f"Friendly warning: you're unpacking the dataframe from function [{name}()] into a dict of "
+                        f"series with columns {df_columns}. This will likely make it hard to map columns to code. "
+                        f"To get rid of this warning, use the prefix of the function name to prefix the column names. "
+                        f"e.g. spend_df() would require columns to start with spend_."
+                    )
                 df_dict = output.to_dict(orient="series")
                 flattened_outputs.update(df_dict)
             elif isinstance(output, pd.Series):
