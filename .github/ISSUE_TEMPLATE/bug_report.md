@@ -7,27 +7,8 @@ assignees: ''
 
 ---
 
-Short description explaining the high-level reason for the new issue.
+# THE HAMILTON REPOSITORY HAS MIGRATED
 
-# Current behavior
+This repository is no longer maintained or monitored.
 
-
-## Stack Traces
-(If applicable)
-
-## Screenshots
-(If applicable)
-
-
-## Steps to replicate behavior
-1.
-
-## Library & System Information
-E.g. python version, hamilton library version, linux, etc.
-
-
-# Expected behavior
-
-
-# Additional context
-Add any other context about the problem here.
+Please make any bug reports on https://github.com/DAGWorks-Inc/hamilton/.  
