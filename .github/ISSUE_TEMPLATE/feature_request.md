@@ -6,15 +6,8 @@ labels: ''
 assignees: ''
 
 ---
+# THE HAMILTON REPOSITORY HAS MIGRATED
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+This repository is no longer maintained or monitored.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
-
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
-
-**Additional context**
-Add any other context or screenshots about the feature request here.
+Please make any feature requests on https://github.com/DAGWorks-Inc/hamilton/.  
