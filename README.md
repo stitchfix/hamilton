@@ -4,7 +4,7 @@ This repository is no longer maintained. Hamilton is now located at https://gith
 
 If you find yourself here, please:
 
-1. Give the new repository a ⭐
+1. [Give the new repository a ⭐](https://github.com/DAGWorks-Inc/hamilton).
 2. (if from a link) Open up an issue in the new repository so we can modify the link.
 
 Thank you!
